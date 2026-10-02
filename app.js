@@ -8,6 +8,8 @@ const morgan = require('morgan');
 
 const connectDatabase = require('./config/database');
 const depositRoutes = require('./routes/deposit.routes');
+const withdrawRoutes = require('./routes/withdraw.routes');
+const transactionRoutes = require('./routes/transaction.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,6 +27,8 @@ if (process.env.NODE_ENV !== 'production') {
 };
 
 app.use('/api/deposit', depositRoutes);
+app.use('/api/withdraw', withdrawRoutes);
+app.use('/api/transaction', transactionRoutes);
 
 app.get('/', (req, res) => {
     res.render('home', {

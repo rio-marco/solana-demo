@@ -13,9 +13,7 @@ $(document).ready(function () {
             </div>
         `;
 
-        $('#alertContainer').removeClass('display-none').hide().fadeIn(400);
-
-        $('#alertContainer').html(alertHtml);
+        $('#alertContainer').removeClass('display-none').html(alertHtml).hide().fadeIn(300);
 
         $('html, body').animate({
             scrollTop: $('#alertContainer').offset().top - 100
@@ -23,8 +21,35 @@ $(document).ready(function () {
     };
 
     function clearAlert() {
-        $('#alertContainer').addClass('display-none');
-        $('#alertContainer').empty();
+        $('#alertContainer').addClass('display-none').empty();
+    };
+
+    async function copyToClipboard(text, $btn) {
+        if (!text) return;
+
+        const originalHtml = $btn ? $btn.html() : '';
+
+        try {
+            if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                await navigator.clipboard.writeText(text);
+            } else {
+                const $tempInput = $('<textarea>').val(text).css({ position: 'fixed', left: '-9999px', opacity: '0' }).appendTo('body');
+
+                $tempInput[0].focus();
+                $tempInput[0].select();
+
+                document.execCommand('copy');
+
+                $tempInput.remove();
+            };
+
+            if ($btn) {
+                $btn.html('<i class="fa-solid fa-check text-success"></i>');
+                setTimeout(() => $btn.html(originalHtml), 2000);
+            };
+        } catch (err) {
+            console.error('Copy failed:', err);
+        };
     };
 
     function checkAndLoadPlatformAddress(forceGenerate = false) {
@@ -42,13 +67,9 @@ $(document).ready(function () {
                 if (response.success && response.exists && response.address) {
                     currentPlatformAddress = response.address;
                     $('#platformAddress').text(response.address);
-
-                    $('#addressCard').removeClass('display-none').hide().fadeIn(400);
-                    // $('#btnNewAddressContainer').addClass('display-none');
                     clearAlert();
                 } else {
-                    $('#addressCard').addClass('display-none');
-                    // $('#btnNewAddressContainer').removeClass('display-none').hide().fadeIn(400);
+                    $('#platformAddress').text('No address generated yet.');
                 };
             },
             error: function (xhr) {
@@ -60,63 +81,28 @@ $(document).ready(function () {
                 $('#btnNewAddress').prop('disabled', false).html('<i class="fa-solid fa-wallet me-2"></i>Generate Address');
             },
         });
-    }
+    };
 
     $('#btnNewAddress').on('click', function () {
         checkAndLoadPlatformAddress(true);
     });
 
-    $('#btnCopyAddress').on('click', async function () {
-
+    $('#btnCopyAddress').on('click', function () {
         if (!currentPlatformAddress) {
-            console.warn("Platform address is not available.");
+            showAlert("Platform address is not available to copy.");
             return;
         };
 
-        const $button = $('#btnCopyAddress');
-        const originalHtml = $button.html();
+        copyToClipboard(currentPlatformAddress, $(this));
+    });
 
-        try {
-            if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-                await navigator.clipboard.writeText(currentPlatformAddress);
-            } else {
-                const $tempInput = $('<textarea>');
-
-                $tempInput.val(currentPlatformAddress)
-                    .css({
-                        position: 'fixed',
-                        left: '-9999px',
-                        top: '0',
-                        opacity: '0'
-                    }).appendTo('body');
-
-                $tempInput[0].focus();
-                $tempInput[0].select();
-
-                const copied = document.execCommand('copy');
-
-                $tempInput.remove();
-
-                if (!copied) {
-                    console.error('Copy command failed.');
-                };
-            };
-
-            $button
-                .removeClass('btn-outline-secondary')
-                .addClass('btn-success')
-                .html('<i class="fa-solid fa-check me-1"></i> Copied!');
-
-            setTimeout(function () {
-                $button
-                    .removeClass('btn-success')
-                    .addClass('btn-outline-secondary')
-                    .html(originalHtml);
-            }, 2000);
-        } catch (error) {
-            console.error('Copy failed:', error);
-            showAlert("Unable to copy the address. Please copy it manually.");
-        };
+    $('#btnGenerateMemo').on('click', function () {
+        const randomHex = Array.from(crypto.getRandomValues(new Uint8Array(4)))
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('')
+            .toUpperCase();
+        const generatedMemo = `MEMO-${randomHex}`;
+        $('#memoInput').val(generatedMemo).removeClass('is-invalid');
     });
 
     function fetchPlatformBalance() {
@@ -151,9 +137,8 @@ $(document).ready(function () {
         fetchPlatformBalance();
     });
 
-    function validateFormInputs() {
+    function validateDepositInputs() {
         let isValid = true;
-
         const memo = $('#memoInput').val().trim();
         const amount = $('#amountInput').val().trim();
 
@@ -183,7 +168,7 @@ $(document).ready(function () {
         e.preventDefault();
         clearAlert();
 
-        const validatedData = validateFormInputs();
+        const validatedData = validateDepositInputs();
         if (!validatedData) return;
 
         const $submitBtn = $('#btnSubmitDeposit');
@@ -220,7 +205,7 @@ $(document).ready(function () {
                     $('#depositResultCard').removeClass('display-none').hide().slideDown(400);
                     $('#depositFormCard').slideUp(300);
 
-                    showAlert('Deposit transaction submitted and confirmed on Solana blockchain!', 'success');
+                    showAlert('Deposit transaction confirmed on Solana blockchain!', 'success');
 
                     fetchPlatformBalance();
                 } else {
@@ -251,6 +236,219 @@ $(document).ready(function () {
         });
     });
 
+    function validateWithdrawInputs() {
+        let isValid = true;
+        const toAddress = $('#withdrawToAddressInput').val().trim();
+        const memo = $('#withdrawMemoInput').val().trim();
+        const amount = $('#withdrawAmountInput').val().trim();
+
+        $('#withdrawToAddressInput, #withdrawMemoInput, #withdrawAmountInput').removeClass('is-invalid');
+
+        if (!toAddress || toAddress.length < 32) {
+            $('#withdrawToAddressInput').addClass('is-invalid');
+            $('#withdrawToAddressError').text('Please enter a valid Solana wallet address.');
+            isValid = false;
+        };
+
+        if (!memo || memo.length < 1) {
+            $('#withdrawMemoInput').addClass('is-invalid');
+            $('#withdrawMemoError').text('Please enter a valid memo string.');
+            isValid = false;
+        };
+
+        const numAmount = Number(amount);
+        if (!amount || isNaN(numAmount) || numAmount <= 0) {
+            $('#withdrawAmountInput').addClass('is-invalid');
+            $('#withdrawAmountError').text('Please enter a valid SOL withdraw amount.');
+            isValid = false;
+        };
+
+        return isValid ? { toAddress, memo, amount: numAmount } : null;
+    }
+
+    $('#withdrawToAddressInput, #withdrawMemoInput, #withdrawAmountInput').on('input', function () {
+        $(this).removeClass('is-invalid');
+    });
+
+    $('#withdrawForm').on('submit', function (e) {
+        e.preventDefault();
+        clearAlert();
+
+        const validatedData = validateWithdrawInputs();
+        if (!validatedData) return;
+
+        const $submitBtn = $('#btnSubmitWithdraw');
+        $submitBtn.prop('disabled', true);
+
+        $('#btnWithdrawText').addClass('display-none');
+        $('#btnWithdrawSpinner').removeClass('display-none');
+
+        $.ajax({
+            url: '/api/withdraw/create',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(validatedData),
+            dataType: 'json',
+            success: function (response) {
+                if (response.success && response.signature) {
+                    $('#withdrawResAmount').text(`${Number(response.amount).toFixed(4)} SOL`);
+                    $('#withdrawResMemo').text(response.memo);
+                    $('#withdrawResWithdrawalId').text(response.withdrawId);
+
+                    const signature = response.signature || '--';
+                    const shortSig = signature.length > 20
+                        ? signature.substring(0, 10) + '...' + signature.substring(signature.length - 10)
+                        : signature;
+
+                    $('#withdrawResSignature').text(shortSig).attr('title', signature);
+
+                    const explorerUrl = `https://explorer.solana.com/tx/${signature}?cluster=${solanaNetwork}`;
+                    $('#withdrawResExplorerLink').attr('href', explorerUrl);
+
+                    $('#withdrawResultCard').removeClass('display-none').hide().slideDown(400);
+
+                    showAlert('Withdrawal transaction submitted and confirmed on-chain!', 'success');
+
+                    fetchPlatformBalance();
+                    fetchWithdrawList();
+
+                    $('#withdrawForm')[0].reset();
+                } else {
+                    console.error("response Error message-------->", response.message);
+                    showAlert("Withdrawal failed.");
+                };
+            },
+            error: function (xhr) {
+                const errResponse = xhr.responseJSON || {};
+                const errMsg = errResponse.message || 'Deposit processing failed.';
+                console.error("errMsg-------->", errMsg);
+                showAlert("Withdrawal processing failed", "danger");
+            },
+            complete: function () {
+                $submitBtn.prop('disabled', false);
+                $('#btnWithdrawSpinner').addClass('display-none');
+                $('#btnWithdrawText').removeClass('display-none');
+            },
+        });
+    });
+
+    function fetchWithdrawList() {
+        $.ajax({
+            url: '/api/withdraw/list',
+            method: 'GET',
+            dataType: 'json',
+            success: function (response) {
+                const $tbody = $('#withdrawListTbody');
+                $tbody.empty();
+
+                if (response.success && response.withdrawals && response.withdrawals.length > 0) {
+                    response.withdrawals.forEach(function (item) {
+                        const sig = item.transactionSignature || item.withdrawId || 'N/A';
+                        const explorerUrl = sig !== 'N/A'
+                            ? `https://explorer.solana.com/tx/${sig}?cluster=${solanaNetwork}`
+                            : '#';
+                        const createdDate = item.createdAt
+                            ? new Date(item.createdAt).toLocaleString()
+                            : 'N/A';
+
+                        const tr = `
+                            <tr>
+                                <td>
+                                    <a href="${explorerUrl}" target="_blank" rel="noopener noreferrer" class="text-decoration-none text-primary fw-500 text-break">
+                                        ${sig}
+                                    </a>
+                                </td>
+                                <td class="font-sans text-muted fs-7">
+                                    ${createdDate}
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary action-icon-btn me-1 btn-copy-tx" data-url="${explorerUrl}" data-sig="${sig}" title="Copy Transaction Hash / URL">
+                                        <i class="fa-regular fa-copy"></i>
+                                    </button>
+                                    <a href="${explorerUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary action-icon-btn" title="Open in Explorer">
+                                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        `;
+                        $tbody.append(tr);
+                    });
+                } else {
+                    $tbody.html(`
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-4 font-sans fs-7">
+                                No withdrawals recorded yet.
+                            </td>
+                        </tr>
+                    `);
+                };
+            },
+            error: function (xhr) {
+                const errResponse = xhr.responseJSON || {};
+                const errMsg = errResponse.message || "Failed to fetch withdrawal list.";
+                console.error("fetchWithdrawList error-------->", errMsg);
+            },
+        });
+    };
+
+    $(document).on('click', '.btn-copy-tx', function () {
+        const sig = $(this).data('sig') || $(this).data('url');
+        copyToClipboard(sig, $(this));
+    });
+
+    $('#btnRefreshWithdrawList').on('click', function () {
+        fetchWithdrawList();
+    });
+
+    $('#btnDecodeTx').on('click', function () {
+        clearAlert();
+        const txId = $('#decodeTxInput').val().trim();
+
+        if (!txId) {
+            showAlert('Please paste a valid Transaction Id (Signature).');
+            return;
+        };
+
+        const $btn = $('#btnDecodeTx');
+        $btn.prop('disabled', true);
+        $('#btnDecodeText').addClass('display-none');
+        $('#btnDecodeSpinner').removeClass('display-none');
+
+        $.ajax({
+            url: '/api/transaction/decode',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ transactionId: txId }),
+            dataType: 'json',
+            success: function (response) {
+                if (response.success && response.transaction) {
+                    const jsonStr = JSON.stringify(response.transaction, null, 2);
+                    $('#decodedJsonCode').text(jsonStr);
+                    $('#decodedJsonContainer').removeClass('display-none').hide().slideDown(300);
+                } else {
+                    showAlert(response.message || 'Could not decode transaction.');
+                    $('#decodedJsonContainer').addClass('display-none');
+                };
+            },
+            error: function (xhr) {
+                const errResponse = xhr.responseJSON || {};
+                showAlert(errResponse.message || 'Failed to decode transaction.', 'danger');
+                $('#decodedJsonContainer').addClass('display-none');
+            },
+            complete: function () {
+                $btn.prop('disabled', false);
+                $('#btnDecodeSpinner').addClass('display-none');
+                $('#btnDecodeText').removeClass('display-none');
+            },
+        });
+    });
+
+    $('#btnCopyJson').on('click', function () {
+        const jsonText = $('#decodedJsonCode').text();
+        copyToClipboard(jsonText, $(this));
+    });
+
     checkAndLoadPlatformAddress();
     fetchPlatformBalance();
+    fetchWithdrawList();
 });

@@ -12,7 +12,7 @@ const Setting = require('../models/setting.model');
     try {
         await connectDatabase();
 
-        let platformPrivSetting = await Setting.getVal('SOLANA_PLATFORM_PRIVATE_KEY', process.env.SOLANA_PLATFORM_PRIVATE_KEY);
+        let platformPrivSetting = await Setting.getVal('SOLANA_PLATFORM_PRIVATE_KEY');
         let platformKeypair;
 
         if (platformPrivSetting && !platformPrivSetting.startsWith('YOUR_')) {
@@ -29,7 +29,7 @@ const Setting = require('../models/setting.model');
             console.log(`[Platform Wallet] NEW generated: ${platformKeypair.publicKey.toBase58()}`);
         }
 
-        let senderPrivSetting = await Setting.getVal('SOLANA_SENDER_PRIVATE_KEY', process.env.SOLANA_SENDER_PRIVATE_KEY);
+        let senderPrivSetting = await Setting.getVal('SOLANA_SENDER_PRIVATE_KEY');
         let senderKeypair;
 
         if (senderPrivSetting && !senderPrivSetting.startsWith('YOUR_')) {

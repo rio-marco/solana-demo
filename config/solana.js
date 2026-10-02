@@ -8,7 +8,7 @@ const network = process.env.SOLANA_NETWORK || 'devnet';
 const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
 const commitment = process.env.SOLANA_COMMITMENT || 'confirmed';
 
-const memoProgramIdStr = process.env.SOLANA_MEMO_PROGRAM_ID || 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
+const memoProgramIdStr = process.env.SOLANA_MEMO_PROGRAM_ID;
 const MEMO_PROGRAM_ID = new PublicKey(memoProgramIdStr);
 
 const connection = new Connection(rpcUrl, {
@@ -36,12 +36,12 @@ const parseKeypair = (keyString) => {
 };
 
 const getPlatformKeypairAsync = async () => {
-    const privKeyStr = (await Setting.getVal('SOLANA_PLATFORM_PRIVATE_KEY')) || process.env.SOLANA_PLATFORM_PRIVATE_KEY;
+    const privKeyStr = (await Setting.getVal('SOLANA_PLATFORM_PRIVATE_KEY'));
     return parseKeypair(privKeyStr);
 };
 
 const getSenderKeypairAsync = async () => {
-    const privKeyStr = (await Setting.getVal('SOLANA_SENDER_PRIVATE_KEY')) || process.env.SOLANA_SENDER_PRIVATE_KEY;
+    const privKeyStr = (await Setting.getVal('SOLANA_SENDER_PRIVATE_KEY'));
     return parseKeypair(privKeyStr);
 };
 
@@ -49,28 +49,9 @@ const getPlatformPublicKeyAsync = async () => {
     const keypair = await getPlatformKeypairAsync();
     if (keypair) return keypair.publicKey;
 
-    const pubKeyStr = (await Setting.getVal('SOLANA_PLATFORM_PUBLIC_KEY')) || process.env.SOLANA_PLATFORM_PUBLIC_KEY;
+    const pubKeyStr = (await Setting.getVal('SOLANA_PLATFORM_PUBLIC_KEY'));
     if (pubKeyStr && !pubKeyStr.startsWith('YOUR_')) {
         return new PublicKey(pubKeyStr);
-    };
-
-    return null;
-};
-
-const getPlatformKeypair = () => {
-    return parseKeypair(process.env.SOLANA_PLATFORM_PRIVATE_KEY);
-};
-
-const getSenderKeypair = () => {
-    return parseKeypair(process.env.SOLANA_SENDER_PRIVATE_KEY);
-};
-
-const getPlatformPublicKey = () => {
-    const keypair = getPlatformKeypair();
-    if (keypair) return keypair.publicKey;
-
-    if (process.env.SOLANA_PLATFORM_PUBLIC_KEY && !process.env.SOLANA_PLATFORM_PUBLIC_KEY.startsWith('YOUR_')) {
-        return new PublicKey(process.env.SOLANA_PLATFORM_PUBLIC_KEY);
     };
 
     return null;
@@ -86,7 +67,4 @@ module.exports = {
     getPlatformKeypairAsync,
     getSenderKeypairAsync,
     getPlatformPublicKeyAsync,
-    getPlatformKeypair,
-    getSenderKeypair,
-    getPlatformPublicKey,
 };

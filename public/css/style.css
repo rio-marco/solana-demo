@@ -4,6 +4,8 @@
     --solana-purple: #9945FF;
     --solana-green: #14F195;
     --solana-dark: #121212;
+    --solana-blue: #38bdf8;
+    --solana-white: #ffffff;
 }
 
 body {
@@ -15,6 +17,14 @@ body {
 
 .font-mono {
     font-family: var(--bs-font-monospace) !important;
+}
+
+.max-w-1200 {
+    max-width: 1200px;
+}
+
+.max-w-1600 {
+    max-width: 1600px;
 }
 
 .max-w-768 {
@@ -100,4 +110,28 @@ body {
 #resExplorerLink {
     font-size: 0.75rem;
     font-weight: 600;
+}
+
+.json-container {
+    background-color: #0f172a;
+    color: var(--solana-white);
+    border-radius: 8px;
+    padding: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+    font-family: var(--bs-font-monospace);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.action-icon-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
 }

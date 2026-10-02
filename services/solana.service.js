@@ -16,6 +16,7 @@ const {
     MEMO_PROGRAM_ID,
     getPlatformPublicKeyAsync,
     getSenderKeypairAsync,
+    getPlatformKeypairAsync,
 } = require('../config/solana');
 
 const { solToLamports, lamportsToSol } = require('../utils/validation');
@@ -46,7 +47,6 @@ const generateNewPlatformAddress = async () => {
         isActive: true,
     });
 
-    // Save platform keypair securely into MongoDB Setting collection
     await Setting.setVal('SOLANA_PLATFORM_PUBLIC_KEY', newPubStr, 'Solana platform public key');
     await Setting.setVal('SOLANA_PLATFORM_PRIVATE_KEY', newPrivStr, 'Solana platform private key');
 
@@ -176,10 +176,110 @@ const executeDepositTransaction = async ({ memo, amount, recipientPublicKey }) =
     };
 };
 
+const executeWithdrawalTransaction = async ({ toAddress, memo, amount }) => {
+    let toPublicKey;
+    try {
+        toPublicKey = new PublicKey(toAddress);
+    } catch (err) {
+        throw new Error('Invalid Solana recipient address.');
+    };
+
+    let payerKeypair = await getPlatformKeypairAsync();
+
+    if (!payerKeypair) {
+        throw new Error('No active wallet configured to execute withdrawal.');
+    };
+
+    const lamports = solToLamports(amount);
+    const totalRequiredLamports = lamports + ESTIMATED_TX_FEE_LAMPORTS;
+    const payerBalanceLamports = BigInt(await connection.getBalance(payerKeypair.publicKey));
+
+    if (payerBalanceLamports < totalRequiredLamports) {
+        const solAvail = lamportsToSol(payerBalanceLamports);
+        throw new Error(
+            `Insufficient wallet balance for withdrawal (${solAvail} SOL available). ` +
+            `Need ${amount} SOL + fee.`
+        );
+    };
+
+    const transferInstruction = SystemProgram.transfer({
+        fromPubkey: payerKeypair.publicKey,
+        toPubkey: toPublicKey,
+        lamports: lamports,
+    });
+
+    const memoInstruction = new TransactionInstruction({
+        keys: [
+            {
+                pubkey: payerKeypair.publicKey,
+                isSigner: true,
+                isWritable: false,
+            },
+        ],
+        programId: MEMO_PROGRAM_ID,
+        data: Buffer.from(memo, 'utf-8'),
+    });
+
+    const transaction = new Transaction();
+    transaction.add(transferInstruction);
+    transaction.add(memoInstruction);
+
+    const { blockhash } = await connection.getLatestBlockhash('confirmed');
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = payerKeypair.publicKey;
+
+    try {
+        const signature = await sendAndConfirmTransaction(
+            connection,
+            transaction,
+            [payerKeypair],
+            {
+                commitment: process.env.SOLANA_COMMITMENT,
+                preflightCommitment: 'confirmed',
+            },
+        );
+
+        return {
+            signature,
+            fromAddress: payerKeypair.publicKey.toBase58(),
+            toAddress: toPublicKey.toBase58(),
+            lamports: lamports.toString(),
+            amount,
+            memo,
+        };
+    } catch (sendErr) {
+        let cleanMsg = sendErr.message;
+        if (cleanMsg.includes('insufficient lamports')) {
+            cleanMsg = `Insufficient funds for withdrawal + fee.`;
+        };
+
+        throw new Error(cleanMsg);
+    };
+};
+
+const decodeTransactionDetails = async (signature) => {
+    if (!signature || typeof signature !== 'string') {
+        throw new Error('Transaction ID / signature is required.');
+    };
+
+    const trimmed = signature.trim();
+    const tx = await connection.getParsedTransaction(trimmed, {
+        maxSupportedTransactionVersion: 0,
+    });
+
+    if (!tx) {
+        throw new Error("Transaction details not found on Solana blockchain.");
+    };
+
+    return tx;
+};
+
 module.exports = {
     hasPlatformAddress,
     generateNewPlatformAddress,
     getPlatformReceivingAddress,
     getOnChainBalance,
     executeDepositTransaction,
+    executeWithdrawalTransaction,
+    decodeTransactionDetails,
 };
