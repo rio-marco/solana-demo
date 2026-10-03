@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP - Solana SOL Deposit & Withdrawal System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #f8fafc; min-vh-100; }
+        .auth-card { max-width: 460px; width: 100%; border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); background: rgba(30, 41, 59, 0.85); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
+        .btn-solana { background: linear-gradient(90deg, #9945FF 0%, #14F195 100%); border: none; color: #000; font-weight: 700; }
+        .btn-solana:hover { opacity: 0.95; color: #000; }
+        .otp-input { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; letter-spacing: 0.5rem; text-align: center; background: #0f172a; border: 1px solid #334155; color: #14F195; font-weight: 700; }
+        .otp-input:focus { background: #0f172a; border-color: #14F195; color: #14F195; box-shadow: 0 0 0 0.25rem rgba(20, 241, 149, 0.25); }
+        .form-control { background: #0f172a; border: 1px solid #334155; color: #f8fafc; }
+    </style>
+</head>
+<body class="d-flex align-items-center justify-content-center py-5 min-vh-100">
+
+    <div class="auth-card p-4 p-md-5 rounded-4">
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center mb-2 px-3 py-1 rounded-pill bg-dark border border-secondary">
+                <span class="text-info fw-bold me-2"><i class="fa-solid fa-envelope-circle-check"></i></span>
+                <span class="fs-7 fw-600 text-light">Email Verification</span>
+            </div>
+            <h2 class="h4 fw-700 text-white mt-2">Enter Verification Code</h2>
+            <p class="text-muted fs-7">We sent a 6-digit OTP code & login link to:<br><strong class="text-info font-mono" id="emailDisplay"><%= email || 'your email' %></strong></p>
+        </div>
+
+        <div id="authAlert" class="alert display-none mb-3" role="alert"></div>
+
+        <form id="verifyOtpForm" novalidate>
+            <div class="mb-3">
+                <input type="hidden" id="emailInput" value="<%= email || '' %>">
+                <% if (!email) { %>
+                    <div class="mb-3">
+                        <label for="emailInputVisible" class="form-label text-light fs-7 fw-600">Email Address</label>
+                        <input type="email" class="form-control mb-2" id="emailInputVisible" placeholder="Enter your registered email">
+                    </div>
+                <% } %>
+                <label for="otpInput" class="form-label text-light fs-7 fw-600">6-Digit OTP Code</label>
+                <input type="text" class="form-control otp-input py-2" id="otpInput" placeholder="123456" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" required>
+            </div>
+
+            <button type="submit" id="btnVerifySubmit" class="btn btn-solana w-100 py-2.5 rounded-3 fs-6 mb-3">
+                <span id="verifyBtnText"><i class="fa-solid fa-circle-check me-2"></i>Verify OTP & Login</span>
+                <span id="verifyBtnSpinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
+            </button>
+        </form>
+
+        <div class="p-3 rounded-3 bg-dark border border-secondary text-center fs-7 text-muted mb-3">
+            <i class="fa-solid fa-link text-primary me-1"></i> You can also click the <strong>Direct Login Link</strong> sent to your email to log in instantly.
+        </div>
+
+        <div class="text-center mt-3 pt-3 border-top border-secondary">
+            <p class="fs-7 text-muted mb-0">Need to sign in with password? <a href="/login" class="text-info fw-600 text-decoration-none">Go to Login</a></p>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#verifyOtpForm').on('submit', function(e) {
+                e.preventDefault();
+                const email = $('#emailInput').val() || $('#emailInputVisible').val();
+                const otp = $('#otpInput').val().trim();
+
+                if (!email || !otp) {
+                    $('#authAlert').removeClass('display-none alert-success').addClass('alert-danger').text('Please enter both your email and the 6-digit OTP code.');
+                    return;
+                }
+
+                if (otp.length !== 6) {
+                    $('#authAlert').removeClass('display-none alert-success').addClass('alert-danger').text('OTP code must be 6 digits.');
+                    return;
+                }
+
+                $('#btnVerifySubmit').prop('disabled', true);
+                $('#verifyBtnText').addClass('d-none');
+                $('#verifyBtnSpinner').removeClass('d-none');
+
+                $.ajax({
+                    url: '/api/auth/verify-otp',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ email: email.trim(), otp: otp }),
+                    success: function(res) {
+                        $('#authAlert').removeClass('display-none alert-danger').addClass('alert-success').text(res.data.message || 'OTP verified! Redirecting...');
+                        setTimeout(function() {
+                            window.location.href = res.data.redirectUrl || '/';
+                        }, 500);
+                    },
+                    error: function(xhr) {
+                        const msg = xhr.responseJSON ? xhr.responseJSON.message : 'OTP verification failed.';
+                        $('#authAlert').removeClass('display-none alert-success').addClass('alert-danger').text(msg);
+                    },
+                    complete: function() {
+                        $('#btnVerifySubmit').prop('disabled', false);
+                        $('#verifyBtnText').removeClass('d-none');
+                        $('#verifyBtnSpinner').addClass('d-none');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

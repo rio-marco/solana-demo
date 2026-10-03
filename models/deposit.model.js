@@ -4,6 +4,11 @@ const mongoose = require('mongoose');
 
 const DepositSchema = new mongoose.Schema(
     {
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            index: true,
+        },
         depositId: {
             type: String,
             required: true,

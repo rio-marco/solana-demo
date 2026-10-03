@@ -1,0 +1,18 @@
+<%- include("header") %>
+
+    <h2>Welcome, <%= userName %>!</h2>
+    <p>Thank you for registering. Please verify your email address to access your account dashboard.</p>
+
+    <p><strong>Option 1: Direct One-Click Login</strong></p>
+    <p>Click the button below to directly verify and log into your account dashboard:</p>
+    <a href="<%= directLoginUrl %>" class="btn-login">Direct Login to Dashboard</a>
+
+    <p style="margin-top: 24px;"><strong>Option 2: 6-Digit Verification Code (OTP)</strong></p>
+    <p>Alternatively, copy the 6-digit code below and enter it on the verification screen:</p>
+    <div class="otp-box"><%= otpCode %></div>
+
+    <p>This OTP is valid for <strong><%= expireIn %> minutes</strong> and should not be shared with anyone.</p>
+
+    <p class="footer">If you did not request this, please ignore this email.</p>
+
+<%- include("footer") %>

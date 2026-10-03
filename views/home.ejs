@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Solana SOL Deposit & Withdrawal System</title>
+        <title>Dashboard - Solana SOL Deposit & Withdrawal System</title>
         
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,14 +13,68 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
         
         <link rel="stylesheet" href="/css/style.css">
+        <style>
+            .user-balance-card {
+                background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+                color: #ffffff;
+            }
+            .notification-badge {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                font-size: 0.65rem;
+            }
+            .memo-badge {
+                background-color: rgba(2, 132, 199, 0.1);
+                border: 1px solid rgba(2, 132, 199, 0.25);
+                color: #0284c7;
+            }
+        </style>
     </head>
     <body class="bg-gradient-subtle min-vh-100 d-flex flex-column">
+        <!-- Toast Notification Container for Real-Time Alerts -->
+        <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090;" id="realtimeToastContainer"></div>
+
         <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom py-3 shadow-xs">
             <div class="container-fluid max-w-1600">
-                <a class="navbar-brand d-flex align-items-center fw-700 text-dark fs-5" href="javascript:;">
-                    <span class="solana-badge me-2"><i class="fa-solid me-1"></i>SOL</span>
-                    Solana Deposit & Withdrawal System
+                <a class="navbar-brand d-flex align-items-center fw-700 text-dark fs-5" href="/">
+                    <span class="solana-badge me-2"><i class="fa-solid fa-coins me-1"></i>SOL</span>
+                    Solana System
                 </a>
+                
+                <div class="d-flex align-items-center gap-3 ms-auto">
+                    <!-- Notification Bell -->
+                    <button class="btn btn-light border rounded-circle position-relative p-2" id="btnNotificationModal" data-bs-toggle="modal" data-bs-target="#notificationsModal" title="Notifications">
+                        <i class="fa-solid fa-bell text-secondary fs-5"></i>
+                        <span class="badge rounded-pill bg-danger notification-badge display-none" id="unreadBadgeCount">0</span>
+                    </button>
+
+                    <!-- Top Right User Total Balance -->
+                    <div class="user-balance-card border rounded-3 px-3 py-2 shadow-xs d-flex align-items-center gap-2">
+                        <div>
+                            <span class="text-white-50 fs-8 text-uppercase fw-600 d-block">Total Balance</span>
+                            <span id="userWalletBalance" class="fw-700 fs-5 font-mono text-white me-1">
+                                <%= typeof user !== 'undefined' && user ? Number(user.walletBalance).toFixed(6) : '0.000000' %> SOL
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- User Account Dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle rounded-3 fw-600 px-3 py-2" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-circle-user me-1 text-primary"></i>
+                            <%= typeof user !== 'undefined' && user ? user.name : 'Account' %>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userMenuDropdown">
+                            <li class="px-3 py-2 border-bottom">
+                                <span class="d-block fw-700 text-dark fs-7"><%= user.name %></span>
+                                <span class="d-block text-muted fs-8"><%= user.email %></span>
+                                <span class="badge memo-badge mt-1 font-mono fs-8"><i class="fa-solid fa-tag me-1"></i><%= user.memo %></span>
+                            </li>
+                            <li><a class="dropdown-item text-danger py-2 mt-1" href="/logout"><i class="fa-solid fa-right-from-bracket me-2"></i>Sign Out</a></li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </nav>
 
@@ -71,9 +125,12 @@
                                 <form id="depositForm" novalidate class="flex-grow-1 d-flex flex-column justify-content-between">
                                     <div>
                                         <div class="mb-3">
-                                            <label for="memoInput" class="form-label fw-600 text-dark fs-7">
-                                                Memo <span class="text-danger">*</span>
-                                            </label>
+                                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                                <label for="memoInput" class="form-label fw-600 text-dark fs-7 mb-0">
+                                                    Memo <span class="text-danger">*</span>
+                                                </label>
+                                                <span class="badge memo-badge font-mono fs-8">Your Assigned Memo: <%= user.memo %></span>
+                                            </div>
                                             <div class="input-group">
                                                 <span class="input-group-text bg-white border-end-0 text-muted">
                                                     <i class="fa-solid fa-tag"></i>
@@ -82,12 +139,13 @@
                                                     type="text" 
                                                     class="form-control border-start-0 border-end-0 ps-0 font-mono" 
                                                     id="memoInput" 
+                                                    value="<%= user.memo %>"
                                                     placeholder="Enter or generate memo"
                                                     required
                                                     maxlength="100"
                                                 >
-                                                <button type="button" id="btnGenerateMemo" class="btn btn-outline-primary fw-600 px-3 fs-7" title="Generate random memo">
-                                                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i>Generate Memo
+                                                <button type="button" id="btnGenerateMemo" class="btn btn-outline-primary fw-600 px-3 fs-7" title="Use assigned memo">
+                                                    <i class="fa-solid fa-rotate-left me-1"></i>Use My Memo
                                                 </button>
                                             </div>
                                             <div class="invalid-feedback id-memo-error" id="memoError">
@@ -182,8 +240,9 @@
                 <div class="col-lg-6">
                     <div class="card border-0 shadow-sm rounded-4 h-100">
                         <div class="card-body p-4 d-flex flex-column">
-                            <h2 class="h5 fw-700 text-dark mb-3 pb-2 border-bottom">
-                                <i class="fa-solid fa-arrow-up-from-bracket text-primary me-2"></i>Withdraw
+                            <h2 class="h5 fw-700 text-dark mb-3 pb-2 border-bottom d-flex align-items-center justify-content-between">
+                                <span><i class="fa-solid fa-arrow-up-from-bracket text-primary me-2"></i>Withdraw</span>
+                                <span class="fs-8 text-muted fw-600">Max Withdrawable: <strong class="text-primary font-mono userWalletBalanceDisplay"><%= Number(user.walletBalance).toFixed(6) %> SOL</strong></span>
                             </h2>
 
                             <form id="withdrawForm" novalidate class="flex-grow-1 d-flex flex-column justify-content-between">
@@ -221,6 +280,7 @@
                                                 type="text" 
                                                 class="form-control border-start-0 ps-0 font-mono" 
                                                 id="withdrawMemoInput" 
+                                                value="<%= user.memo %>"
                                                 placeholder="Paste memo from deposit box"
                                                 required
                                                 maxlength="100"
@@ -243,10 +303,10 @@
                                                 type="number" 
                                                 class="form-control border-start-0 ps-2 fw-600" 
                                                 id="withdrawAmountInput" 
-                                                placeholder="Enter withdraw amount (e.g. 0.05)"
+                                                placeholder="Enter withdraw amount"
                                                 step="0.001"
                                                 min="0.000000001"
-                                                max="10000"
+                                                max="<%= user.walletBalance %>"
                                                 required
                                             >
                                         </div>
@@ -308,6 +368,7 @@
                 </div>
             </div>
 
+            <!-- Withdraw List Table with Pagination -->
             <div class="card border-0 shadow-sm rounded-4 mb-4">
                 <div class="card-body p-4">
                     <h2 class="h5 fw-700 text-dark mb-3 pb-2 border-bottom d-flex align-items-center justify-content-between">
@@ -317,27 +378,41 @@
                         </button>
                     </h2>
 
-                    <div class="table-responsive">
+                    <div class="table-responsive mb-3">
                         <table class="table table-hover align-middle mb-0" id="withdrawListTable">
                             <thead class="table-light fs-8 text-uppercase tracking-wider">
                                 <tr>
-                                    <th scope="col" style="min-width: 250px;">Transaction Hash (Explorer URL)</th>
+                                    <th scope="col" style="min-width: 250px;">Transaction Signature / Explorer</th>
+                                    <th scope="col">Amount (SOL)</th>
+                                    <th scope="col">Status</th>
                                     <th scope="col">Created Date</th>
-                                    <th scope="col" class="text-end" style="width: 120px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="withdrawListTbody" class="fs-7 font-mono">
                                 <tr>
-                                    <td colspan="3" class="text-center text-muted py-4 font-sans fs-7">
-                                        No withdrawals recorded yet.
+                                    <td colspan="4" class="text-center text-muted py-4 font-sans fs-7">
+                                        Loading withdrawals...
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Withdraw List Pagination -->
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2" id="withdrawPaginationContainer">
+                        <div class="text-muted fs-7 font-sans" id="withdrawPaginationInfo">
+                            Showing 0 of 0 records
+                        </div>
+                        <nav aria-label="Withdraw pagination">
+                            <ul class="pagination pagination-sm mb-0" id="withdrawPaginationUl">
+                                <!-- Pagination items dynamically inserted here -->
+                            </ul>
+                        </nav>
+                    </div>
                 </div>
             </div>
 
+            <!-- Decode Transaction Card -->
             <div class="card border-0 shadow-sm rounded-4 mb-4">
                 <div class="card-body p-4">
                     <h2 class="h5 fw-700 text-dark mb-3 pb-2 border-bottom">
@@ -377,8 +452,51 @@
             </div>
         </main>
 
+        <!-- Notifications Modal with Pagination -->
+        <div class="modal fade" id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content border-0 shadow-lg rounded-4">
+                    <div class="modal-header border-bottom py-3">
+                        <h5 class="modal-title fw-700 text-dark" id="notificationsModalLabel">
+                            <i class="fa-solid fa-bell text-primary me-2"></i>Real-Time Notifications
+                        </h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-2" id="btnMarkAllRead">
+                                <i class="fa-solid fa-check-double me-1"></i>Mark All Read
+                            </button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div id="notificationsList" class="d-flex flex-column gap-3 mb-3">
+                            <div class="text-center text-muted py-4">Loading notifications...</div>
+                        </div>
+
+                        <!-- Notifications Pagination -->
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-3 border-top" id="notificationPaginationContainer">
+                            <div class="text-muted fs-8 font-sans" id="notificationPaginationInfo">
+                                Showing 0 of 0 notifications
+                            </div>
+                            <nav aria-label="Notification pagination">
+                                <ul class="pagination pagination-sm mb-0" id="notificationPaginationUl">
+                                    <!-- Pagination items dynamically inserted here -->
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Store user identity for socket room
+            window.CURRENT_USER_ID = "<%= typeof user !== 'undefined' && user ? user._id : '' %>";
+            window.USER_MEMO = "<%= typeof user !== 'undefined' && user ? user.memo : '' %>";
+        </script>
+
         <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
         <script src="/js/deposit.js"></script>
     </body>
 </html>
