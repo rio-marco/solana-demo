@@ -8,7 +8,31 @@ $(document).ready(function () {
     let currentNotificationPage = 1;
     const defaultLimit = 10;
 
-    // Real-Time WebSockets Setup
+    // Request HTML5 Browser Desktop Notification Permissions
+    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+        Notification.requestPermission().then(function (permission) {
+            console.log('[Browser Notification Permission]:', permission);
+        });
+    }
+
+    function sendBrowserDesktopNotification(title, message) {
+        if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+                const notif = new Notification(title || 'Solana Deposit System', {
+                    body: message || 'Transaction completed successfully.',
+                    icon: 'https://cdn-icons-png.flaticon.com/512/12114/12114233.png',
+                });
+
+                notif.onclick = function () {
+                    window.focus();
+                };
+            } catch (err) {
+                console.warn('[Browser Notification Error]:', err.message);
+            }
+        }
+    }
+
+    // Real-Time WebSockets Setup (Socket.io)
     if (window.CURRENT_USER_ID && typeof io !== 'undefined') {
         const socket = io();
 
@@ -17,24 +41,49 @@ $(document).ready(function () {
             socket.emit('joinRoom', `user_${window.CURRENT_USER_ID}`);
         });
 
+        // Listen for Real-Time Notification Socket Event
         socket.on('notification', function (data) {
             console.log('[Socket.io] Notification received:', data);
 
-            // Update Total Balance
+            // Dynamically update Total Wallet Balance on screen
             if (data.newBalance !== undefined) {
                 const formatted = Number(data.newBalance).toFixed(6);
                 $('#userWalletBalance').text(`${formatted} SOL`);
                 $('.userWalletBalanceDisplay').text(`${formatted} SOL`);
             }
 
-            // Show Toast Alert
             if (data.notification) {
+                // High-visibility Toast Notification in Browser
                 showToastNotification(data.notification);
+
+                // Native Browser Desktop Notification
+                sendBrowserDesktopNotification(data.notification.title, data.notification.message);
+
+                // Refresh Notifications List
                 fetchNotificationsList(1);
             }
 
-            // Refresh lists
+            // Refresh Withdraw List
             fetchWithdrawList(currentWithdrawPage);
+        });
+
+        // Listen specifically for Deposit Completed Socket Event
+        socket.on('deposit_completed', function (data) {
+            console.log('[Socket.io] Deposit Completed Event received:', data);
+
+            if (data.newBalance !== undefined) {
+                const formatted = Number(data.newBalance).toFixed(6);
+                $('#userWalletBalance').text(`${formatted} SOL`);
+                $('.userWalletBalanceDisplay').text(`${formatted} SOL`);
+            }
+
+            if (data.notification) {
+                showToastNotification(data.notification);
+                sendBrowserDesktopNotification('Deposit Confirmed!', data.notification.message);
+                fetchNotificationsList(1);
+            }
+
+            fetchPlatformBalance();
         });
     }
 
@@ -59,7 +108,7 @@ $(document).ready(function () {
         const $toast = $(toastHtml).appendTo('#realtimeToastContainer');
         setTimeout(function () {
             $toast.fadeOut(500, function () { $toast.remove(); });
-        }, 6000);
+        }, 7000);
     }
 
     function showAlert(message, type = 'danger') {
@@ -269,7 +318,10 @@ $(document).ready(function () {
                     $('#depositResultCard').removeClass('display-none').hide().slideDown(400);
                     $('#depositFormCard').slideUp(300);
 
-                    showAlert('Deposit transaction confirmed and added to your wallet balance!', 'success');
+                    // showAlert('Deposit transaction confirmed and added to your wallet balance!', 'success');
+
+                    // Trigger Native Desktop Notification
+                    sendBrowserDesktopNotification('Deposit Confirmed!', `Successfully deposited ${response.amount} SOL.`);
 
                     fetchPlatformBalance();
                 } else {

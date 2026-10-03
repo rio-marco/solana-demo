@@ -145,33 +145,46 @@ const createDeposit = async (req, res, next) => {
 
             await deposit.save();
 
-            // Update user wallet balance if authenticated user
-            let updatedUserBalance = 0;
-            if (req.user) {
-                const user = await User.findById(req.user._id);
-                if (user) {
-                    user.walletBalance = (user.walletBalance || 0) + deposit.amount;
-                    await user.save();
-                    updatedUserBalance = user.walletBalance;
+            // Link to user by req.user or by assigned unique memo
+            let targetUser = req.user ? await User.findById(req.user._id) : null;
+            if (!targetUser && deposit.memo) {
+                targetUser = await User.findOne({ memo: deposit.memo });
+            }
 
-                    // Create real-time notification
-                    const notification = await Notification.create({
-                        userId: user._id,
-                        title: 'Deposit Confirmed!',
-                        message: `Deposit of ${deposit.amount} SOL confirmed on chain.`,
-                        type: 'DEPOSIT',
-                        amount: deposit.amount,
+            let updatedUserBalance = 0;
+            if (targetUser) {
+                deposit.userId = targetUser._id;
+                await deposit.save();
+
+                targetUser.walletBalance = (targetUser.walletBalance || 0) + deposit.amount;
+                await targetUser.save();
+                updatedUserBalance = targetUser.walletBalance;
+
+                // Create real-time notification
+                const notification = await Notification.create({
+                    userId: targetUser._id,
+                    title: 'Deposit Completed!',
+                    message: `Deposit of ${deposit.amount} SOL (Memo: ${deposit.memo}) confirmed & credited to your wallet balance.`,
+                    type: 'DEPOSIT',
+                    amount: deposit.amount,
+                    transactionSignature: deposit.transactionSignature,
+                });
+
+                // WebSocket emission to user's browser
+                const io = req.app.get('io');
+                if (io) {
+                    io.to(`user_${targetUser._id}`).emit('notification', {
+                        notification,
+                        newBalance: updatedUserBalance,
+                        depositId: deposit.depositId,
                         transactionSignature: deposit.transactionSignature,
                     });
 
-                    // Real-time socket alert
-                    const io = req.app.get('io');
-                    if (io) {
-                        io.to(`user_${user._id}`).emit('notification', {
-                            notification,
-                            newBalance: updatedUserBalance,
-                        });
-                    }
+                    // io.to(`user_${targetUser._id}`).emit('deposit_completed', {
+                    //     notification,
+                    //     deposit,
+                    //     newBalance: updatedUserBalance,
+                    // });
                 }
             }
 
@@ -241,31 +254,43 @@ const verifyDeposit = async (req, res, next) => {
             deposit.failureReason = null;
             await deposit.save();
 
-            // Update user wallet balance if deposit belongs to user
-            let updatedUserBalance = 0;
-            if (deposit.userId) {
-                const user = await User.findById(deposit.userId);
-                if (user) {
-                    user.walletBalance = (user.walletBalance || 0) + deposit.amount;
-                    await user.save();
-                    updatedUserBalance = user.walletBalance;
+            let targetUser = deposit.userId ? await User.findById(deposit.userId) : null;
+            if (!targetUser && deposit.memo) {
+                targetUser = await User.findOne({ memo: deposit.memo });
+            }
 
-                    const notification = await Notification.create({
-                        userId: user._id,
-                        title: 'Deposit Confirmed!',
-                        message: `Deposit of ${deposit.amount} SOL verified and added to wallet balance.`,
-                        type: 'DEPOSIT',
-                        amount: deposit.amount,
+            let updatedUserBalance = 0;
+            if (targetUser) {
+                deposit.userId = targetUser._id;
+                await deposit.save();
+
+                targetUser.walletBalance = (targetUser.walletBalance || 0) + deposit.amount;
+                await targetUser.save();
+                updatedUserBalance = targetUser.walletBalance;
+
+                const notification = await Notification.create({
+                    userId: targetUser._id,
+                    title: 'Deposit Confirmed!',
+                    message: `Deposit of ${deposit.amount} SOL verified and added to your wallet balance.`,
+                    type: 'DEPOSIT',
+                    amount: deposit.amount,
+                    transactionSignature: deposit.transactionSignature,
+                });
+
+                const io = req.app.get('io');
+                if (io) {
+                    io.to(`user_${targetUser._id}`).emit('notification', {
+                        notification,
+                        newBalance: updatedUserBalance,
+                        depositId: deposit.depositId,
                         transactionSignature: deposit.transactionSignature,
                     });
 
-                    const io = req.app.get('io');
-                    if (io) {
-                        io.to(`user_${user._id}`).emit('notification', {
-                            notification,
-                            newBalance: updatedUserBalance,
-                        });
-                    }
+                    // io.to(`user_${targetUser._id}`).emit('deposit_completed', {
+                    //     notification,
+                    //     deposit,
+                    //     newBalance: updatedUserBalance,
+                    // });
                 }
             }
 
