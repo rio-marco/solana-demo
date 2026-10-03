@@ -11,12 +11,7 @@ const { Server } = require('socket.io');
 
 const constants = require('./config/constant');
 const connectDatabase = require('./config/database');
-const authRoutes = require('./routes/auth.routes');
-const depositRoutes = require('./routes/deposit.routes');
-const withdrawRoutes = require('./routes/withdraw.routes');
-const transactionRoutes = require('./routes/transaction.routes');
-const notificationRoutes = require('./routes/notification.routes');
-const authMiddleware = require('./middleware/auth.middleware');
+const indexRouter = require('./routes/index.routes');
 
 const app = express();
 const server = http.createServer(app);
@@ -63,21 +58,7 @@ if (process.env.NODE_ENV !== 'live') {
     app.use(morgan('dev'));
 }
 
-// Register Web Page & Auth Routes
-app.use('/', authRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/deposit', depositRoutes);
-app.use('/api/withdraw', withdrawRoutes);
-app.use('/api/transaction', transactionRoutes);
-
-// Dashboard Route (Protected)
-app.get('/', authMiddleware, (req, res) => {
-    res.render('home', {
-        user: req.user,
-        network: process.env.SOLANA_NETWORK || 'devnet',
-        rpcUrl: process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com',
-    });
-});
+app.use("/", indexRouter);
 
 app.use((req, res) => {
     if (req.accepts('html')) {

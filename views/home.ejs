@@ -37,7 +37,7 @@
                         <div>
                             <span class="text-white-50 fs-8 text-uppercase fw-600 d-block">Total Balance</span>
                             <span id="userWalletBalance" class="fw-700 fs-5 font-mono text-white me-1">
-                                <%= typeof user !== 'undefined' && user ? Number(user.walletBalance).toFixed(6) : '0.000000' %> SOL
+                                <%= typeof body.user !== 'undefined' && body.user ? Number(body.user.walletBalance).toFixed(6) : '0.000000' %> SOL
                             </span>
                         </div>
                     </div>
@@ -46,13 +46,13 @@
                     <div class="dropdown">
                         <button class="btn btn-outline-secondary dropdown-toggle rounded-3 fw-600 px-3 py-2" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa-solid fa-circle-user me-1 text-primary"></i>
-                            <%= typeof user !== 'undefined' && user ? user.name : 'Account' %>
+                            <%= typeof body.user !== 'undefined' && body.user ? body.user.name : 'Account' %>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userMenuDropdown">
                             <li class="px-3 py-2 border-bottom">
-                                <span class="d-block fw-700 text-dark fs-7"><%= user.name %></span>
-                                <span class="d-block text-muted fs-8"><%= user.email %></span>
-                                <span class="badge memo-badge mt-1 font-mono fs-8"><i class="fa-solid fa-tag me-1"></i><%= user.memo %></span>
+                                <span class="d-block fw-700 text-dark fs-7"><%= body.user.name %></span>
+                                <span class="d-block text-muted fs-8"><%= body.user.email %></span>
+                                <span class="badge memo-badge mt-1 font-mono fs-8"><i class="fa-solid fa-tag me-1"></i><%= body.user.memo %></span>
                             </li>
                             <li><a class="dropdown-item text-danger py-2 mt-1" href="/logout"><i class="fa-solid fa-right-from-bracket me-2"></i>Sign Out</a></li>
                         </ul>
@@ -112,7 +112,6 @@
                                                 <label for="memoInput" class="form-label fw-600 text-dark fs-7 mb-0">
                                                     Memo <span class="text-danger">*</span>
                                                 </label>
-                                                <!-- <span class="badge memo-badge font-mono fs-8">Your Assigned Memo: <%= user.memo %></span> -->
                                             </div>
                                             <div class="input-group">
                                                 <span class="input-group-text bg-white border-end-0 text-muted">
@@ -122,7 +121,7 @@
                                                     type="text" 
                                                     class="form-control" 
                                                     id="memoInput" 
-                                                    value="<%= user.memo %>"
+                                                    value="<%= body.user.memo %>"
                                                     placeholder="Enter or generate memo"
                                                     required
                                                     maxlength="100"
@@ -226,7 +225,7 @@
                         <div class="card-body p-4 d-flex flex-column">
                             <h2 class="h5 fw-700 text-dark mb-3 pb-2 border-bottom d-flex align-items-center justify-content-between">
                                 <span><i class="fa-solid fa-arrow-up-from-bracket text-primary me-2"></i>Withdraw</span>
-                                <span class="fs-8 text-muted fw-600">Max Withdrawable: <strong class="text-primary font-mono userWalletBalanceDisplay"><%= Number(user.walletBalance).toFixed(6) %> SOL</strong></span>
+                                <span class="fs-8 text-muted fw-600">Max Withdrawable: <strong class="text-primary font-mono userWalletBalanceDisplay"><%= Number(body.user.walletBalance).toFixed(6) %> SOL</strong></span>
                             </h2>
 
                             <form id="withdrawForm" novalidate class="flex-grow-1 d-flex flex-column justify-content-between">
@@ -264,7 +263,7 @@
                                                 type="text" 
                                                 class="form-control" 
                                                 id="withdrawMemoInput" 
-                                                value="<%= user.memo %>"
+                                                value="<%= body.user.memo %>"
                                                 placeholder="Paste memo from deposit box"
                                                 required
                                                 maxlength="100"
@@ -291,7 +290,7 @@
                                                 placeholder="Enter withdraw amount"
                                                 step="0.001"
                                                 min="0.000000001"
-                                                max="<%= user.walletBalance %>"
+                                                max="<%= body.user.walletBalance %>"
                                                 required
                                             >
                                         </div>
@@ -476,8 +475,8 @@
 
         <script>
             // Store user identity for socket room
-            window.CURRENT_USER_ID = "<%= typeof user !== 'undefined' && user ? user._id : '' %>";
-            window.USER_MEMO = "<%= typeof user !== 'undefined' && user ? user.memo : '' %>";
+            window.CURRENT_USER_ID = "<%= typeof body.user !== 'undefined' && body.user ? body.user._id : '' %>";
+            window.USER_MEMO = "<%= typeof body.user !== 'undefined' && body.user ? body.user.memo : '' %>";
         </script>
 
         <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>

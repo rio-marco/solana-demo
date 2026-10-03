@@ -108,7 +108,7 @@ $(document).ready(function () {
     }
 
     function checkAndLoadPlatformAddress(forceGenerate = false) {
-        const url = forceGenerate ? '/api/deposit/address?generate=true' : '/api/deposit/address';
+        const url = forceGenerate ? '/deposit/address?generate=true' : '/deposit/address';
 
         if (forceGenerate) {
             $('#btnNewAddress').prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-2"></i>Generating Address...');
@@ -168,7 +168,7 @@ $(document).ready(function () {
         $btn.prop('disabled', true).find('i').addClass('fa-spin');
 
         $.ajax({
-            url: '/api/deposit/balance',
+            url: '/deposit/balance',
             method: 'GET',
             dataType: 'json',
             success: function (response) {
@@ -236,7 +236,7 @@ $(document).ready(function () {
         $('#btnSubmitSpinner').removeClass('display-none');
 
         $.ajax({
-            url: '/api/deposit/create',
+            url: '/deposit/create',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({
@@ -351,7 +351,7 @@ $(document).ready(function () {
         $('#btnWithdrawSpinner').removeClass('display-none');
 
         $.ajax({
-            url: '/api/withdraw/create',
+            url: '/withdraw/create',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(validatedData),
@@ -412,7 +412,7 @@ $(document).ready(function () {
     function fetchWithdrawList(page = 1, limit = defaultLimit) {
         currentWithdrawPage = page;
         $.ajax({
-            url: `/api/withdraw/list?page=${page}&limit=${limit}`,
+            url: `/withdraw/list?page=${page}&limit=${limit}`,
             method: 'GET',
             dataType: 'json',
             success: function (response) {
@@ -481,7 +481,7 @@ $(document).ready(function () {
     function fetchNotificationsList(page = 1, limit = defaultLimit) {
         currentNotificationPage = page;
         $.ajax({
-            url: `/api/notifications?page=${page}&limit=${limit}`,
+            url: `/notifications?page=${page}&limit=${limit}`,
             method: 'GET',
             dataType: 'json',
             success: function (response) {
@@ -591,7 +591,7 @@ $(document).ready(function () {
 
     $('#btnMarkAllRead').on('click', function () {
         $.ajax({
-            url: '/api/notifications/read-all',
+            url: '/notifications/read-all',
             method: 'POST',
             success: function () {
                 fetchNotificationsList(currentNotificationPage);
@@ -623,7 +623,7 @@ $(document).ready(function () {
         $('#btnDecodeSpinner').removeClass('display-none');
 
         $.ajax({
-            url: '/api/transaction/decode',
+            url: '/transaction/decode',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({ transactionId: txId }),

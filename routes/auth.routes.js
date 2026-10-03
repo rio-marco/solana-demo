@@ -1,5 +1,3 @@
-'use strict';
-
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/auth.controller');
@@ -15,6 +13,5 @@ router.get('/verify-otp', authController.getVerifyOtpPage);
 router.post('/api/auth/verify-otp', authController.verifyOtp);
 
 router.get('/auth/direct-login', authController.directLoginLink);
-router.get('/logout', authMiddleware, authController.logout);
 
 module.exports = router;

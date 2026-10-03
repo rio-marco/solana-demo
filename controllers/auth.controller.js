@@ -329,22 +329,6 @@ const login = async (req, res, next) => {
     };
 };
 
-const logout = async (req, res) => {
-    try {
-        const userId = req.userId;
-        const authToken = req.session?.user?.authToken;
-
-        await Session.updateOne({ userId: new ObjectId(userId), authToken, status: constants.SESSION_STATUS.EXPIRED });
-
-        req.session.destroy();
-
-        return res.status(constants.STATUS.OK).json(Generallib.success_res("Sign out successfully."));
-    } catch (error) {
-        Generallib.log1(["Error in logout----->", error]);
-        return res.status(constants.STATUS.INTERNAL_SERVER_ERROR).json(Generallib.error_res(messages.unexpectedDataError));
-    };
-};
-
 module.exports = {
     getLoginPage,
     getSignupPage,
@@ -353,5 +337,4 @@ module.exports = {
     verifyOtp,
     directLoginLink,
     login,
-    logout,
 };
