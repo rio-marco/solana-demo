@@ -1,32 +1,35 @@
 'use strict';
 
 const path = require('path');
+const ejs = require('ejs');
 const { v4: uuidv4 } = require('uuid');
-const User = require('../models/user.model');
 const { sendSuccess, sendError } = require('../utils/response');
-const { sendVerificationEmail } = require('../services/mail.service');
+const { sendMail } = require('../services/mail.service');
 const constants = require('../config/constant');
-
-const __dirname = path.resolve();
+const Generallib = require('../utils/lib/general.lib');
+const User = require('../models/user.model');
 
 const renderLogin = (req, res) => {
     if (req.session && req.session.userId) {
         return res.redirect('/');
-    }
+    };
+
     return res.render('login', { error: null });
 };
 
 const renderSignup = (req, res) => {
     if (req.session && req.session.userId) {
         return res.redirect('/');
-    }
+    };
+
     return res.render('signup', { error: null });
 };
 
 const renderVerifyOtp = (req, res) => {
     if (req.session && req.session.userId) {
         return res.redirect('/');
-    }
+    };
+
     const email = req.query.email || (req.session && req.session.pendingEmail) || '';
     return res.render('verify-otp', { email, error: null });
 };
@@ -37,25 +40,25 @@ const signup = async (req, res, next) => {
 
         if (!name || typeof name !== 'string' || !name.trim()) {
             return sendError(res, 'Name is required.', 400);
-        }
+        };
 
         if (!email || typeof email !== 'string' || !email.trim()) {
             return sendError(res, 'Email is required.', 400);
-        }
+        };
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email.trim())) {
             return sendError(res, 'Please provide a valid email address.', 400);
-        }
+        };
 
         if (!password || typeof password !== 'string' || password.length < 6) {
             return sendError(res, 'Password must be at least 6 characters long.', 400);
-        }
+        };
 
         const existingUser = await User.findOne({ email: email.trim().toLowerCase() });
         if (existingUser) {
             return sendError(res, 'An account with this email address already exists.', 400);
-        }
+        };
 
         const uniqueMemo = await Generallib.generateUniqueMemo();
         const otpCode = Generallib.generateOtp(constants.OTP_LENGTH);
@@ -80,31 +83,26 @@ const signup = async (req, res, next) => {
             req.session.pendingEmail = user.email;
         };
 
-        try {
-            const baseUrl = process.env.NODE_URL;
-            const directLoginUrl = `${baseUrl}/auth/direct-login?token=${verificationToken}&email=${encodeURIComponent(user.email)}`;
+        const baseUrl = process.env.NODE_URL;
+        const directLoginUrl = `${baseUrl}/auth/direct-login?token=${verificationToken}&email=${encodeURIComponent(user.email)}`;
 
-            const mailFile = await ejs.renderFile(path.join(__dirname, "views/emails/otp-verification.ejs"), {
-                title: "New Register OTP",
-                userName: user.name,
-                otpCode: otpCode,
-                directLoginUrl: directLoginUrl,
-                expireIn: constants.OTP_EXPIRY_MINUTE / (1000 * 60), // Convert milliseconds to minutes
-            });
+        const mailFile = await ejs.renderFile("views/emails/otp-verification.ejs", {
+            title: "New Register OTP",
+            userName: user.name,
+            otpCode: otpCode,
+            directLoginUrl: directLoginUrl,
+            expireIn: constants.OTP_EXPIRY_MINUTE / (1000 * 60), // Convert milliseconds to minutes
+        });
 
-            const mailOptions = {
-                from: process.env.MAIL_FROM_ADDRESS || process.env.MAIL_USERNAME,
-                to: user.email,
-                subject: `${otpCode} is your Solana System verification code`,
-                html: mailFile,
-            };
+        const mailOptions = {
+            from: process.env.MAIL_FROM_ADDRESS || process.env.MAIL_USERNAME,
+            to: user.email,
+            subject: `${otpCode} is your Solana System verification code`,
+            html: mailFile,
+        };
 
-            const emailSent = await sendMail(mailOptions);
-            if (!emailSent) {
-                return sendError(res, "Failed to send OTP", 500);
-            };
-        } catch (mailErr) {
-            console.error('[Signup Email Dispatch Warning]:', mailErr.message);
+        const emailSent = await sendMail(mailOptions);
+        if (!emailSent) {
             return sendError(res, "Failed to send OTP", 500);
         };
 
@@ -241,7 +239,7 @@ const login = async (req, res, next) => {
                 const baseUrl = process.env.NODE_URL;
                 const directLoginUrl = `${baseUrl}/auth/direct-login?token=${verificationToken}&email=${encodeURIComponent(user.email)}`;
 
-                const mailFile = await ejs.renderFile(path.join(__dirname, "views/emails/otp-verification.ejs"), {
+                const mailFile = await ejs.renderFile("views/emails/otp-verification.ejs", {
                     title: "New Register OTP",
                     userName: user.name,
                     otpCode: otpCode,

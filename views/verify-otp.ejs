@@ -10,17 +10,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="/css/style.css">
-    <style>
-        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #f8fafc; min-vh-100; }
-        .auth-card { max-width: 460px; width: 100%; border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); background: rgba(30, 41, 59, 0.85); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
-        .btn-solana { background: linear-gradient(90deg, #9945FF 0%, #14F195 100%); border: none; color: #000; font-weight: 700; }
-        .btn-solana:hover { opacity: 0.95; color: #000; }
-        .otp-input { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; letter-spacing: 0.5rem; text-align: center; background: #0f172a; border: 1px solid #334155; color: #14F195; font-weight: 700; }
-        .otp-input:focus { background: #0f172a; border-color: #14F195; color: #14F195; box-shadow: 0 0 0 0.25rem rgba(20, 241, 149, 0.25); }
-        .form-control { background: #0f172a; border: 1px solid #334155; color: #f8fafc; }
-    </style>
 </head>
-<body class="d-flex align-items-center justify-content-center py-5 min-vh-100">
+<body class="auth-body d-flex align-items-center justify-content-center py-5 min-vh-100">
 
     <div class="auth-card p-4 p-md-5 rounded-4">
         <div class="text-center mb-4">
@@ -29,7 +20,7 @@
                 <span class="fs-7 fw-600 text-light">Email Verification</span>
             </div>
             <h2 class="h4 fw-700 text-white mt-2">Enter Verification Code</h2>
-            <p class="text-muted fs-7">We sent a 6-digit OTP code & login link to:<br><strong class="text-info font-mono" id="emailDisplay"><%= email || 'your email' %></strong></p>
+            <p class="text-white fs-7">We sent a 6-digit OTP code & login link to:<br><strong class="text-info font-mono" id="emailDisplay"><%= email || 'your email' %></strong></p>
         </div>
 
         <div id="authAlert" class="alert display-none mb-3" role="alert"></div>
@@ -53,12 +44,12 @@
             </button>
         </form>
 
-        <div class="p-3 rounded-3 bg-dark border border-secondary text-center fs-7 text-muted mb-3">
+        <div class="p-3 rounded-3 bg-dark border border-secondary text-center fs-7 text-white mb-3">
             <i class="fa-solid fa-link text-primary me-1"></i> You can also click the <strong>Direct Login Link</strong> sent to your email to log in instantly.
         </div>
 
         <div class="text-center mt-3 pt-3 border-top border-secondary">
-            <p class="fs-7 text-muted mb-0">Need to sign in with password? <a href="/login" class="text-info fw-600 text-decoration-none">Go to Login</a></p>
+            <p class="fs-7 text-white mb-0">Need to sign in with password? <a href="/login" class="text-info fw-600 text-decoration-none">Go to Login</a></p>
         </div>
     </div>
 

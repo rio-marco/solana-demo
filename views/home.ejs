@@ -13,27 +13,10 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
         
         <link rel="stylesheet" href="/css/style.css">
-        <style>
-            .user-balance-card {
-                background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-                color: #ffffff;
-            }
-            .notification-badge {
-                position: absolute;
-                top: -5px;
-                right: -5px;
-                font-size: 0.65rem;
-            }
-            .memo-badge {
-                background-color: rgba(2, 132, 199, 0.1);
-                border: 1px solid rgba(2, 132, 199, 0.25);
-                color: #0284c7;
-            }
-        </style>
     </head>
     <body class="bg-gradient-subtle min-vh-100 d-flex flex-column">
         <!-- Toast Notification Container for Real-Time Alerts -->
-        <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090;" id="realtimeToastContainer"></div>
+        <div class="toast-container position-fixed bottom-0 end-0 p-3 realtime-toast-container" id="realtimeToastContainer"></div>
 
         <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom py-3 shadow-xs">
             <div class="container-fluid max-w-1600">
@@ -382,7 +365,7 @@
                         <table class="table table-hover align-middle mb-0" id="withdrawListTable">
                             <thead class="table-light fs-8 text-uppercase tracking-wider">
                                 <tr>
-                                    <th scope="col" style="min-width: 250px;">Transaction Signature / Explorer</th>
+                                    <th scope="col" class="table-min-width">Transaction Signature / Explorer</th>
                                     <th scope="col">Amount (SOL)</th>
                                     <th scope="col">Status</th>
                                     <th scope="col">Created Date</th>

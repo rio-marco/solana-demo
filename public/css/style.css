@@ -15,6 +15,119 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+/* Authentication Pages (Login, Signup, Verify OTP) */
+body.auth-body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #f8fafc;
+    min-height: 100vh;
+}
+
+.auth-card {
+    max-width: 460px;
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(12px);
+    background: rgba(30, 41, 59, 0.92);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+}
+
+/* Auth Input Group & Icon Styling - High Contrast & Glowing Accent */
+.auth-card .input-group-text {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #14F195 !important; /* Glowing Solana Green Icon */
+    font-size: 1.05rem;
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+}
+
+.auth-card .form-control {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+.auth-card .form-control::placeholder {
+    color: #94a3b8 !important;
+    opacity: 0.8;
+}
+
+.auth-card .form-control:focus {
+    background-color: #0f172a !important;
+    border-color: #14F195 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 0.25rem rgba(20, 241, 149, 0.25) !important;
+}
+
+.btn-solana {
+    background: linear-gradient(90deg, #9945FF 0%, #14F195 100%);
+    border: none;
+    color: #0f172a !important;
+    font-weight: 700;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-solana:hover {
+    opacity: 0.95;
+    color: #000000 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(20, 241, 149, 0.3);
+}
+
+.otp-input {
+    font-family: var(--bs-font-monospace) !important;
+    font-size: 1.6rem !important;
+    letter-spacing: 0.5rem !important;
+    text-align: center !important;
+    background-color: #0f172a !important;
+    border: 2px solid #14F195 !important;
+    color: #14F195 !important;
+    font-weight: 700 !important;
+}
+
+.otp-input:focus {
+    background-color: #0f172a !important;
+    border-color: #14F195 !important;
+    color: #14F195 !important;
+    box-shadow: 0 0 0 0.25rem rgba(20, 241, 149, 0.25) !important;
+}
+
+.feature-badge {
+    background-color: rgba(20, 241, 149, 0.1);
+    border: 1px solid rgba(20, 241, 149, 0.3);
+    color: #14F195;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+
+/* Dashboard Custom Components */
+.user-balance-card {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    color: #ffffff;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    font-size: 0.65rem;
+}
+
+.memo-badge {
+    background-color: rgba(2, 132, 199, 0.1);
+    border: 1px solid rgba(2, 132, 199, 0.25);
+    color: #0284c7;
+}
+
+.realtime-toast-container {
+    z-index: 1090;
+}
+
+.table-min-width {
+    min-width: 250px;
+}
+
 .font-mono {
     font-family: var(--bs-font-monospace) !important;
 }
