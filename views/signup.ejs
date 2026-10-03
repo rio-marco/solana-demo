@@ -1,112 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - Solana SOL Deposit & Withdrawal System</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body class="auth-body d-flex align-items-center justify-content-center py-5 min-vh-100">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sign Up - Solana SOL Deposit & Withdrawal System</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+        <link rel="stylesheet" href="/css/style.css">
+    </head>
+    <body class="auth-body d-flex align-items-center justify-content-center py-5 min-vh-100">
 
-    <div class="auth-card p-4 p-md-5 rounded-4">
-        <div class="text-center mb-4">
-            <div class="d-inline-flex align-items-center justify-content-center mb-2 px-3 py-1 rounded-pill bg-dark border border-secondary">
-                <span class="text-success fw-bold me-2"><i class="fa-solid fa-user-plus"></i></span>
-                <span class="fs-7 fw-600 text-light">Create Solana Account</span>
+        <div class="auth-card p-4 p-md-5 rounded-4">
+            <div class="text-center mb-4">
+                <div class="d-inline-flex align-items-center justify-content-center mb-2 px-3 py-1 rounded-pill bg-dark border border-secondary">
+                    <span class="text-success fw-bold me-2"><i class="fa-solid fa-user-plus"></i></span>
+                    <span class="fs-7 fw-600 text-light">Create Solana Account</span>
+                </div>
+                <h2 class="h4 fw-700 text-white mt-2">Sign Up</h2>
+                <p class="text-white fs-7">Register to get a Solana Wallet</p>
             </div>
-            <h2 class="h4 fw-700 text-white mt-2">Sign Up</h2>
-            <p class="text-white fs-7">Register to get a unique Deposit Memo & Solana Wallet</p>
+
+            <div id="authAlert" class="alert display-none mb-3" role="alert"></div>
+
+            <form id="signupForm" novalidate>
+                <div class="mb-3">
+                    <label for="nameInput" class="form-label text-light fs-7 fw-600">Full Name</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+                        <input type="text" class="form-control" id="nameInput" placeholder="John Doe" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label text-light fs-7 fw-600">Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
+                        <input type="email" class="form-control" id="email" placeholder="name@example.com" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="password" class="form-label text-light fs-7 fw-600">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" class="form-control" id="password" placeholder="Minimum 6 characters" minlength="6" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="confirm_password" class="form-label text-light fs-7 fw-600">Confirm Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" class="form-control" id="confirm_password" placeholder="Re-enter your password" minlength="6" required>
+                    </div>
+                </div>
+
+                <button type="button" id="btnSignupSubmit" class="btn btn-solana w-100 py-2.5 rounded-3 fs-6 mb-3">
+                    <span id="signupBtnText"><i class="fa-solid fa-paper-plane me-2"></i>Create Account & Send Code</span>
+                    <span id="signupBtnSpinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
+                </button>
+            </form>
+
+            <div class="text-center mt-3 pt-3 border-top border-secondary">
+                <p class="fs-7 text-white mb-0">Already registered? <a href="/login" class="text-info fw-600 text-decoration-none">Sign In</a></p>
+            </div>
         </div>
 
-        <div id="authAlert" class="alert display-none mb-3" role="alert"></div>
-
-        <form id="signupForm" novalidate>
-            <div class="mb-3">
-                <label for="nameInput" class="form-label text-light fs-7 fw-600">Full Name</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
-                    <input type="text" class="form-control" id="nameInput" placeholder="John Doe" required>
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label for="emailInput" class="form-label text-light fs-7 fw-600">Email Address</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
-                    <input type="email" class="form-control" id="emailInput" placeholder="name@example.com" required>
-                </div>
-            </div>
-
-            <div class="mb-4">
-                <label for="passwordInput" class="form-label text-light fs-7 fw-600">Password</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
-                    <input type="password" class="form-control" id="passwordInput" placeholder="Minimum 6 characters" minlength="6" required>
-                </div>
-            </div>
-
-            <button type="submit" id="btnSignupSubmit" class="btn btn-solana w-100 py-2.5 rounded-3 fs-6 mb-3">
-                <span id="signupBtnText"><i class="fa-solid fa-paper-plane me-2"></i>Create Account & Send Code</span>
-                <span id="signupBtnSpinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
-            </button>
-        </form>
-
-        <div class="text-center mt-3 pt-3 border-top border-secondary">
-            <p class="fs-7 text-white mb-0">Already registered? <a href="/login" class="text-info fw-600 text-decoration-none">Sign In</a></p>
-        </div>
-    </div>
-
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('#signupForm').on('submit', function(e) {
-                e.preventDefault();
-                const name = $('#nameInput').val().trim();
-                const email = $('#emailInput').val().trim();
-                const password = $('#passwordInput').val().trim();
-
-                if (!name || !email || !password) {
-                    $('#authAlert').removeClass('display-none alert-success').addClass('alert-danger').text('Please fill in all fields.');
-                    return;
-                }
-
-                if (password.length < 6) {
-                    $('#authAlert').removeClass('display-none alert-success').addClass('alert-danger').text('Password must be at least 6 characters.');
-                    return;
-                }
-
-                $('#btnSignupSubmit').prop('disabled', true);
-                $('#signupBtnText').addClass('d-none');
-                $('#signupBtnSpinner').removeClass('d-none');
-
-                $.ajax({
-                    url: '/api/auth/signup',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ name, email, password }),
-                    success: function(res) {
-                        $('#authAlert').removeClass('display-none alert-danger').addClass('alert-success').text(res.data.message || 'Account created! Redirecting to verification...');
-                        setTimeout(function() {
-                            window.location.href = res.data.redirectUrl || `/verify-otp?email=${encodeURIComponent(email)}`;
-                        }, 1000);
-                    },
-                    error: function(xhr) {
-                        const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Signup failed. Please try again.';
-                        $('#authAlert').removeClass('display-none alert-success').addClass('alert-danger').text(msg);
-                    },
-                    complete: function() {
-                        $('#btnSignupSubmit').prop('disabled', false);
-                        $('#signupBtnText').removeClass('d-none');
-                        $('#signupBtnSpinner').addClass('d-none');
-                    }
-                });
-            });
-        });
-    </script>
-</body>
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script src="/js/common.js"></script>
+        
+        <% if (typeof footer !== 'undefined' && footer?.js?.length > 0) { %>
+            <% footer.js.forEach(file => { %>
+                <script src="/js/<%= file %>"></script>
+            <% }); %>
+        <% } %>
+    </body>
 </html>

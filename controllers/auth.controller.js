@@ -7,31 +7,74 @@ const { sendSuccess, sendError } = require('../utils/response');
 const { sendMail } = require('../services/mail.service');
 const constants = require('../config/constant');
 const Generallib = require('../utils/lib/general.lib');
+const messages = require('../utils/messages');
+const sessionHelper = require('../utils/helpers/session.helper');
 const User = require('../models/user.model');
+const Session = require('../models/session.model');
 
-const renderLogin = (req, res) => {
-    if (req.session && req.session.userId) {
-        return res.redirect('/');
+const getLoginPage = (req, res) => {
+    try {
+        if (req.session && req.session.user && req.session.user._id) {
+            return res.redirect('/');
+        };
+
+        return res.render("login", {
+            header: {},
+            body: {},
+            footer: {
+                js: ["login.js"],
+            },
+        });
+    } catch (error) {
+        Generallib.log1(["Error in getLoginPage----->", error]);
+        return res.json(Generallib.error_res(messages.unexpectedDataError));
     };
-
-    return res.render('login', { error: null });
 };
 
-const renderSignup = (req, res) => {
-    if (req.session && req.session.userId) {
-        return res.redirect('/');
-    };
+const getSignupPage = (req, res) => {
+    try {
+        if (req.session && req.session.user && req.session.user._id) {
+            return res.redirect('/');
+        };
 
-    return res.render('signup', { error: null });
+        return res.render("signup", {
+            header: {},
+            body: {},
+            footer: {
+                js: ["signup.js"],
+            },
+        });
+    } catch (error) {
+        Generallib.log1(["Error in getSignupPage----->", error]);
+        return res.json(Generallib.error_res(messages.unexpectedDataError));
+    };
 };
 
-const renderVerifyOtp = (req, res) => {
-    if (req.session && req.session.userId) {
-        return res.redirect('/');
-    };
+const getVerifyOtpPage = (req, res) => {
+    try {
+        if (req.session && req.session.user && req.session.user._id) {
+            return res.redirect('/');
+        };
 
-    const email = req.query.email || (req.session && req.session.pendingEmail) || '';
-    return res.render('verify-otp', { email, error: null });
+        const email = req.query.email;
+
+        if (!email || typeof email !== 'string' || !email.trim()) {
+            return res.redirect('/login');
+        };
+
+        return res.render("verify-otp", {
+            header: {},
+            body: {
+                email,
+            },
+            footer: {
+                js: ["verify-otp.js"],
+            },
+        });
+    } catch (error) {
+        Generallib.log1(["Error in getVerifyOtpPage----->", error]);
+        return res.json(Generallib.error_res(messages.unexpectedDataError));
+    };
 };
 
 const signup = async (req, res, next) => {
@@ -39,25 +82,25 @@ const signup = async (req, res, next) => {
         const { name, email, password } = req.body;
 
         if (!name || typeof name !== 'string' || !name.trim()) {
-            return sendError(res, 'Name is required.', 400);
+            return res.json(Generallib.error_res("Name is required."));
         };
 
         if (!email || typeof email !== 'string' || !email.trim()) {
-            return sendError(res, 'Email is required.', 400);
+            return res.json(Generallib.error_res("Email is required."));
         };
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email.trim())) {
-            return sendError(res, 'Please provide a valid email address.', 400);
+            return res.json(Generallib.error_res("Please provide a valid email address."));
         };
 
         if (!password || typeof password !== 'string' || password.length < 6) {
-            return sendError(res, 'Password must be at least 6 characters long.', 400);
+            return res.json(Generallib.error_res("Password must be at least 6 characters long."));
         };
 
         const existingUser = await User.findOne({ email: email.trim().toLowerCase() });
         if (existingUser) {
-            return sendError(res, 'An account with this email address already exists.', 400);
+            return res.json(Generallib.error_res("An account with this email address already exists."));
         };
 
         const uniqueMemo = await Generallib.generateUniqueMemo();
@@ -79,10 +122,6 @@ const signup = async (req, res, next) => {
 
         await user.save();
 
-        if (req.session) {
-            req.session.pendingEmail = user.email;
-        };
-
         const baseUrl = process.env.NODE_URL;
         const directLoginUrl = `${baseUrl}/auth/direct-login?token=${verificationToken}&email=${encodeURIComponent(user.email)}`;
 
@@ -103,19 +142,17 @@ const signup = async (req, res, next) => {
 
         const emailSent = await sendMail(mailOptions);
         if (!emailSent) {
-            return sendError(res, "Failed to send OTP", 500);
+            return res.json(Generallib.error_res("Failed to send OTP."));
         };
 
-        return sendSuccess(res, {
+        return res.json(Generallib.success_res("Registration successful! Verification email sent.", {
             email: user.email,
-            memo: user.memo,
-            message: 'Registration successful! Verification email sent.',
             redirectUrl: `/verify-otp?email=${encodeURIComponent(user.email)}`,
-        }, 201);
+        }));
     } catch (err) {
-        console.error('[Signup Error]:', err.message);
-        return sendError(res, 'Registration failed. Please try again.', 500);
-    }
+        Generallib.log1(["Error in signup----->", err]);
+        return res.json(Generallib.error_res("Registration failed. Please try again."));
+    };
 };
 
 const verifyOtp = async (req, res, next) => {
@@ -123,50 +160,47 @@ const verifyOtp = async (req, res, next) => {
         const { email, otp } = req.body;
 
         if (!email || !otp) {
-            return sendError(res, 'Email and 6-digit OTP code are required.', 400);
-        }
+            return res.json(Generallib.error_res("Email and 6-digit OTP code are required."));
+        };
 
         const cleanEmail = email.trim().toLowerCase();
         const cleanOtp = otp.toString().trim();
 
         const user = await User.findOne({ email: cleanEmail });
         if (!user) {
-            return sendError(res, 'User not found.', 404);
-        }
+            return res.json(Generallib.error_res("User not found."));
+        };
 
         if (user.verificationOtp !== cleanOtp) {
-            return sendError(res, 'Invalid verification OTP code.', 400);
-        }
+            return res.json(Generallib.error_res("Invalid OTP code."));
+        };
 
         if (user.verificationOtpExpires && user.verificationOtpExpires < new Date()) {
-            return sendError(res, 'Verification OTP code has expired. Please request a new one.', 400);
-        }
+            return res.json(Generallib.error_res("OTP code has expired. Please request a new one."));
+        };
 
         user.isVerified = true;
         user.verificationOtp = null;
         user.verificationOtpExpires = null;
         user.verificationToken = null;
+        user.status = constants.USER_STATUS.ACTIVE;
+
         await user.save();
 
-        if (req.session) {
-            req.session.userId = user._id;
-            delete req.session.pendingEmail;
-        }
+        const ip = await Generallib.getIp(req);
 
-        return sendSuccess(res, {
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                memo: user.memo,
-                walletBalance: user.walletBalance,
-            },
-            message: 'Email verified successfully! Redirecting to dashboard...',
-            redirectUrl: '/',
-        });
+        const sessionDetails = await sessionHelper.generateAndStoreSession(req, ip, user._id);
+
+        if (!sessionDetails) {
+            return res.status(constants.STATUS.INTERNAL_SERVER_ERROR).json(Generallib.error_res(messages.unexpectedDataError));
+        };
+
+        req.session.user = { _id: user._id.toString(), authToken: sessionDetails?.authToken };
+
+        return res.json(Generallib.success_res("Email verified successfully! Redirecting to dashboard..."));
     } catch (err) {
-        console.error('[Verify OTP Error]:', err.message);
-        return sendError(res, 'OTP verification failed. Please try again.', 500);
+        Generallib.log1(["Error in verifyOtp----->", err]);
+        return res.json(Generallib.error_res("OTP verification failed. Please try again."));
     }
 };
 
@@ -176,34 +210,41 @@ const directLoginLink = async (req, res, next) => {
 
         if (!token || !email) {
             return res.redirect('/login');
-        }
+        };
 
         const cleanEmail = email.trim().toLowerCase();
         const user = await User.findOne({ email: cleanEmail });
 
         if (!user) {
             return res.redirect('/login');
-        }
+        };
 
         if (user.verificationToken && user.verificationToken === token) {
             user.isVerified = true;
             user.verificationOtp = null;
             user.verificationOtpExpires = null;
             user.verificationToken = null;
+            user.status = constants.USER_STATUS.ACTIVE;
             await user.save();
         } else if (!user.isVerified) {
             return res.redirect('/login');
-        }
+        };
 
-        if (req.session) {
-            req.session.userId = user._id;
-        }
+        const ip = await Generallib.getIp(req);
+
+        const sessionDetails = await sessionHelper.generateAndStoreSession(req, ip, user._id);
+
+        if (!sessionDetails) {
+            return res.status(constants.STATUS.INTERNAL_SERVER_ERROR).json(Generallib.error_res(messages.unexpectedDataError));
+        };
+
+        req.session.user = { _id: user._id.toString(), authToken: sessionDetails?.authToken };
 
         return res.redirect('/');
     } catch (err) {
-        console.error('[Direct Login Link Error]:', err.message);
+        Generallib.log1(["Error in directLoginLink----->", err]);
         return res.redirect('/login');
-    }
+    };
 };
 
 const login = async (req, res, next) => {
@@ -211,20 +252,22 @@ const login = async (req, res, next) => {
         const { email, password } = req.body;
 
         if (!email || !password) {
-            return sendError(res, 'Email and password are required.', 400);
-        }
+            return res.json(Generallib.error_res("Email and password are required."));
+        };
 
         const cleanEmail = email.trim().toLowerCase();
         const user = await User.findOne({ email: cleanEmail });
 
         if (!user) {
-            return sendError(res, 'Invalid email or password.', 400);
-        }
+            return res.json(Generallib.error_res("Invalid email or password."));
+        } else if (user.status === constants.USER_STATUS.SUSPENDED) {
+            return res.status(constants.STATUS.BAD_REQUEST).json(Generallib.error_res("Your account has been suspended. Please contact support."));
+        };
 
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
-            return sendError(res, 'Invalid email or password.', 400);
-        }
+            return res.status(constants.STATUS.BAD_REQUEST).json(Generallib.error_res("Invalid credentials."));
+        };
 
         if (!user.isVerified) {
             const otpCode = Generallib.generateOtp(constants.OTP_LENGTH);
@@ -256,56 +299,56 @@ const login = async (req, res, next) => {
 
                 const emailSent = await sendMail(mailOptions);
                 if (!emailSent) {
-                    return sendError(res, "Failed to send OTP", 500);
+                    return res.json(Generallib.error_res("Failed to send OTP"));
                 };
             } catch (mailErr) {
                 console.error('[Login Re-send OTP Warning]:', mailErr.message);
-                return sendError(res, "Failed to send OTP", 500);
+                return res.json(Generallib.error_res("Failed to send OTP"));
             };
 
-            return sendError(res, 'Please verify your email address first. A new OTP verification code has been sent to your email.', 403, {
+            return res.json(Generallib.error_res("Please verify your email address first. A new OTP verification code has been sent to your email.", {
                 unverified: true,
                 redirectUrl: `/verify-otp?email=${encodeURIComponent(user.email)}`,
-            });
+            }));
         };
 
-        if (req.session) {
-            req.session.userId = user._id;
-        }
+        const ip = await Generallib.getIp(req);
 
-        return sendSuccess(res, {
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                memo: user.memo,
-                walletBalance: user.walletBalance,
-            },
-            message: 'Login successful! Redirecting to dashboard...',
-            redirectUrl: '/',
-        });
+        const sessionDetails = await sessionHelper.generateAndStoreSession(req, ip, user._id);
+
+        if (!sessionDetails) {
+            return res.status(constants.STATUS.INTERNAL_SERVER_ERROR).json(Generallib.error_res(messages.unexpectedDataError));
+        };
+
+        req.session.user = { _id: user._id.toString(), authToken: sessionDetails?.authToken };
+
+        return res.status(constants.STATUS.OK).json(Generallib.success_res("Login successful! Redirecting to dashboard...", { redirectUrl: "/" }));
     } catch (err) {
-        console.error('[Login Error]:', err.message);
-        return sendError(res, 'Login failed. Please try again.', 500);
-    }
+        Generallib.log1(["Error in Login----->", err]);
+        return res.status(constants.STATUS.BAD_REQUEST).json(Generallib.error_res("Login failed. Please try again."));
+    };
 };
 
-const logout = (req, res) => {
-    if (req.session) {
-        req.session.destroy((err) => {
-            if (err) console.error('[Logout Session Destroy Error]:', err.message);
-            res.clearCookie('connect.sid');
-            return res.redirect('/login');
-        });
-    } else {
-        return res.redirect('/login');
-    }
+const logout = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const authToken = req.session?.user?.authToken;
+
+        await Session.updateOne({ userId: new ObjectId(userId), authToken, status: constants.SESSION_STATUS.EXPIRED });
+
+        req.session.destroy();
+
+        return res.status(constants.STATUS.OK).json(Generallib.success_res("Sign out successfully."));
+    } catch (error) {
+        Generallib.log1(["Error in logout----->", error]);
+        return res.status(constants.STATUS.INTERNAL_SERVER_ERROR).json(Generallib.error_res(messages.unexpectedDataError));
+    };
 };
 
 module.exports = {
-    renderLogin,
-    renderSignup,
-    renderVerifyOtp,
+    getLoginPage,
+    getSignupPage,
+    getVerifyOtpPage,
     signup,
     verifyOtp,
     directLoginLink,

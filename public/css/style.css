@@ -35,7 +35,8 @@ body.auth-body {
 .auth-card .input-group-text {
     background-color: #1e293b !important;
     border-color: #334155 !important;
-    color: #14F195 !important; /* Glowing Solana Green Icon */
+    color: #14F195 !important;
+    /* Glowing Solana Green Icon */
     font-size: 1.05rem;
     padding-left: 0.9rem;
     padding-right: 0.9rem;
@@ -148,12 +149,25 @@ body.auth-body {
     max-width: 500px;
 }
 
-.fw-500 { font-weight: 500; }
-.fw-600 { font-weight: 600; }
-.fw-700 { font-weight: 700; }
+.fw-500 {
+    font-weight: 500;
+}
 
-.fs-7 { font-size: 0.875rem; }
-.fs-8 { font-size: 0.775rem; }
+.fw-600 {
+    font-weight: 600;
+}
+
+.fw-700 {
+    font-weight: 700;
+}
+
+.fs-7 {
+    font-size: 0.875rem;
+}
+
+.fs-8 {
+    font-size: 0.775rem;
+}
 
 .tracking-wider {
     letter-spacing: 0.05em;
@@ -181,9 +195,11 @@ body.auth-body {
 .bg-purple-subtle {
     background-color: #f3e8ff !important;
 }
+
 .text-purple {
     color: #7e22ce !important;
 }
+
 .border-purple-subtle {
     border-color: #d8b4fe !important;
 }
@@ -194,7 +210,8 @@ body.auth-body {
     word-break: break-all;
 }
 
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
     border-color: #6366f1;
     box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.15);
 }
@@ -206,11 +223,14 @@ body.auth-body {
 .btn {
     transition: all 0.2s ease-in-out;
 }
+
 .btn-primary {
     background-color: #4f46e5;
     border-color: #4f46e5;
 }
-.btn-primary:hover, .btn-primary:focus {
+
+.btn-primary:hover,
+.btn-primary:focus {
     background-color: #4338ca;
     border-color: #4338ca;
 }
@@ -247,4 +267,31 @@ body.auth-body {
     align-items: center;
     justify-content: center;
     border-radius: 6px;
+}
+
+.toast-container {
+    max-width: 340px;
+    position: fixed;
+    bottom: 20px;
+    right: 30px;
+}
+
+.toast-content {
+    padding: 20px 20px 20px 52px;
+    background: var(--dark);
+    border: 1px solid rgba(184, 184, 255, 0.4);
+    border-radius: 18px;
+    font-size: 14px;
+    position: relative;
+    font-weight: 500;
+    color: var(--l-gray);
+}
+
+.toast-content>i {
+    font-size: 24px;
+    color: #FFCC00;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 18px;
 }

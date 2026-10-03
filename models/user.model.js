@@ -2,6 +2,7 @@
 
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const constants = require('../config/constant');
 
 const UserSchema = new mongoose.Schema(
     {
@@ -50,6 +51,11 @@ const UserSchema = new mongoose.Schema(
             type: String,
             default: null,
             index: true,
+        },
+        status: {
+            type: Number,
+            enum: Object.values(constants.USER_STATUS),
+            default: constants.USER_STATUS.InACTIVE,
         },
     },
     {

@@ -14,4 +14,26 @@ module.exports = {
     DEFAULT_CURRENT_PAGE: 1,
 
     BCRYPT_SALT: 10,
+
+    SESSION_MAX_AGE: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
+
+    STATUS: {
+        OK: 200,
+        BAD_REQUEST: 400,
+        UNAUTHORIZED: 401,
+        NOT_FOUND: 404,
+        INTERNAL_SERVER_ERROR: 500,
+        MAINTENANCE_ERROR: 503,
+    },
+
+    USER_STATUS: {
+        InACTIVE: 1,
+        ACTIVE: 2,
+        SUSPENDED: 3,
+    },
+
+    SESSION_STATUS: {
+        EXPIRED: 0,
+        ACTIVE: 1,
+    },
 };

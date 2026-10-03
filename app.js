@@ -9,13 +9,14 @@ const morgan = require('morgan');
 const session = require('express-session');
 const { Server } = require('socket.io');
 
+const constants = require('./config/constant');
 const connectDatabase = require('./config/database');
 const authRoutes = require('./routes/auth.routes');
 const depositRoutes = require('./routes/deposit.routes');
 const withdrawRoutes = require('./routes/withdraw.routes');
 const transactionRoutes = require('./routes/transaction.routes');
 const notificationRoutes = require('./routes/notification.routes');
-const { isAuthenticatedPage } = require('./middleware/auth.middleware');
+const authMiddleware = require('./middleware/auth.middleware');
 
 const app = express();
 const server = http.createServer(app);
@@ -40,19 +41,25 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(
-    session({
-        secret: process.env.SESSION_SECRET || 'solana-system-secret-key-2026',
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            maxAge: 24 * 60 * 60 * 1000, // 24 hours
-            httpOnly: true,
-        },
-    })
-);
+const parsedUrl = new URL(process.env.NODE_URL);
 
-if (process.env.NODE_ENV !== 'production') {
+const sessionConfig = {
+    name: constants.PLATFORM_NAME,
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    proxy: true,
+    saveUninitialized: false,
+    cookie: {
+        secure: process.env.NODE_ENV !== "local",
+        domain: parsedUrl.hostname,
+        sameSite: "Lax",
+        maxAge: constants.SESSION_MAX_AGE,
+    },
+};
+
+app.use(session(sessionConfig));
+
+if (process.env.NODE_ENV !== 'live') {
     app.use(morgan('dev'));
 }
 
@@ -64,7 +71,7 @@ app.use('/api/withdraw', withdrawRoutes);
 app.use('/api/transaction', transactionRoutes);
 
 // Dashboard Route (Protected)
-app.get('/', isAuthenticatedPage, (req, res) => {
+app.get('/', authMiddleware, (req, res) => {
     res.render('home', {
         user: req.user,
         network: process.env.SOLANA_NETWORK || 'devnet',

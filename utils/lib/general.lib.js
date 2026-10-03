@@ -1,6 +1,7 @@
 'use strict';
 
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const constants = require('../../config/constant');
 const User = require('../../models/user.model');
 
@@ -40,6 +41,11 @@ class General {
         return res;
     };
 
+    log1 = (msg) => {
+        const d = new Date();
+        console.log("[" + d.toLocaleString() + " " + d.getMilliseconds() + "] :", msg);
+    };
+
     isValidIp = (ip) => {
         const ipAddressRegex = /^(\d{1,3}\.){3}(\d{1,3})$/;
         return ipAddressRegex.test(ip);
@@ -68,6 +74,9 @@ class General {
     };
 
     generateOtp = (length = 6) => {
+
+        if (process.env.NODE_ENV === 'local') return '123456';
+
         let result = '';
         const characters = '0123456789';
         for (let i = 0; i < length; i++) {
@@ -93,6 +102,17 @@ class General {
         }
 
         return memo;
+    };
+
+    generateAuthToken = async (payload) => {
+        try {
+            const token = jwt.sign(payload, process.env.AUTH_SECRET);
+
+            return token;
+        } catch (error) {
+            this.log1(["Error in generateAuthToken ----->", error]);
+            return null;
+        };
     };
 }
 
