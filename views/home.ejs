@@ -64,7 +64,7 @@
         <main class="container-fluid max-w-1600 py-4 flex-grow-1">
             <div id="alertContainer" class="mb-4 display-none"></div>
 
-            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <!-- <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
                 <div>
                     <button id="btnNewAddress" class="btn btn-primary px-4 py-2.5 rounded-3 fw-600 shadow-sm">
                         <i class="fa-solid fa-wallet me-2"></i>Generate Address
@@ -80,9 +80,9 @@
                         <span id="platformBalanceDisplay" class="fw-700 fs-5 text-dark font-mono me-1">-- SOL</span>
                     </div>
                 </div>
-            </div>
+            </div> -->
 
-            <div class="row g-4 mb-4">
+            <div class="row g-4 mt-4 mb-4">
                 <div class="col-lg-6">
                     <div class="card border-0 shadow-sm rounded-4 h-100">
                         <div class="card-body p-4 d-flex flex-column">
@@ -112,7 +112,7 @@
                                                 <label for="memoInput" class="form-label fw-600 text-dark fs-7 mb-0">
                                                     Memo <span class="text-danger">*</span>
                                                 </label>
-                                                <span class="badge memo-badge font-mono fs-8">Your Assigned Memo: <%= user.memo %></span>
+                                                <!-- <span class="badge memo-badge font-mono fs-8">Your Assigned Memo: <%= user.memo %></span> -->
                                             </div>
                                             <div class="input-group">
                                                 <span class="input-group-text bg-white border-end-0 text-muted">
@@ -120,16 +120,17 @@
                                                 </span>
                                                 <input 
                                                     type="text" 
-                                                    class="form-control border-start-0 border-end-0 ps-0 font-mono" 
+                                                    class="form-control" 
                                                     id="memoInput" 
                                                     value="<%= user.memo %>"
                                                     placeholder="Enter or generate memo"
                                                     required
                                                     maxlength="100"
+                                                    disabled
                                                 >
-                                                <button type="button" id="btnGenerateMemo" class="btn btn-outline-primary fw-600 px-3 fs-7" title="Use assigned memo">
+                                                <!-- <button type="button" id="btnGenerateMemo" class="btn btn-outline-primary fw-600 px-3 fs-7" title="Use assigned memo">
                                                     <i class="fa-solid fa-rotate-left me-1"></i>Use My Memo
-                                                </button>
+                                                </button> -->
                                             </div>
                                             <div class="invalid-feedback id-memo-error" id="memoError">
                                                 Please enter or generate a memo.
@@ -240,7 +241,7 @@
                                             </span>
                                             <input 
                                                 type="text" 
-                                                class="form-control border-start-0 ps-0 font-mono" 
+                                                class="form-control font-mono" 
                                                 id="withdrawToAddressInput" 
                                                 placeholder="Paste recipient Solana wallet address"
                                                 required
@@ -261,12 +262,13 @@
                                             </span>
                                             <input 
                                                 type="text" 
-                                                class="form-control border-start-0 ps-0 font-mono" 
+                                                class="form-control" 
                                                 id="withdrawMemoInput" 
                                                 value="<%= user.memo %>"
                                                 placeholder="Paste memo from deposit box"
                                                 required
                                                 maxlength="100"
+                                                disabled
                                             >
                                         </div>
                                         <div class="invalid-feedback" id="withdrawMemoError">
@@ -365,15 +367,16 @@
                         <table class="table table-hover align-middle mb-0" id="withdrawListTable">
                             <thead class="table-light fs-8 text-uppercase tracking-wider">
                                 <tr>
-                                    <th scope="col" class="table-min-width">Transaction Signature / Explorer</th>
+                                    <th scope="col" class="table-min-width">Transaction Hash (Explorer URL)</th>
                                     <th scope="col">Amount (SOL)</th>
                                     <th scope="col">Status</th>
                                     <th scope="col">Created Date</th>
+                                    <th scope="col" class="text-end" style="width: 120px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="withdrawListTbody" class="fs-7 font-mono">
                                 <tr>
-                                    <td colspan="4" class="text-center text-muted py-4 font-sans fs-7">
+                                    <td colspan="5" class="text-center text-muted py-4 font-sans fs-7">
                                         Loading withdrawals...
                                     </td>
                                 </tr>
@@ -439,15 +442,15 @@
         <div class="modal fade" id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content border-0 shadow-lg rounded-4">
-                    <div class="modal-header border-bottom py-3">
+                    <div class="modal-header border-bottom py-3 justify-content-between">
                         <h5 class="modal-title fw-700 text-dark" id="notificationsModalLabel">
                             <i class="fa-solid fa-bell text-primary me-2"></i>Real-Time Notifications
                         </h5>
-                        <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-5">
                             <button type="button" class="btn btn-sm btn-outline-primary rounded-2" id="btnMarkAllRead">
-                                <i class="fa-solid fa-check-double me-1"></i>Mark All Read
+                                <i class="fa-solid fa-check-double me-2"></i>Mark All Read
                             </button>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="button" class="btn-close me-2" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                     </div>
                     <div class="modal-body p-4">

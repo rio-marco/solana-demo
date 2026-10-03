@@ -439,6 +439,14 @@ $(document).ready(function () {
                                 <td><span class="badge bg-light text-dark border fw-600 font-mono">${Number(item.amount).toFixed(4)} SOL</span></td>
                                 <td><span class="badge bg-success text-white">CONFIRMED</span></td>
                                 <td class="font-sans text-muted fs-7">${createdDate}</td>
+                                <td class="text-end text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary action-icon-btn me-1 btn-copy-tx" data-url="${explorerUrl}" data-sig="${sig}" title="Copy Transaction Hash / URL">
+                                        <i class="fa-regular fa-copy"></i>
+                                    </button>
+                                    <a href="${explorerUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary action-icon-btn" title="Open in Explorer">
+                                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    </a>
+                                </td>
                             </tr>
                         `;
                         $tbody.append(tr);
@@ -454,7 +462,7 @@ $(document).ready(function () {
                 } else {
                     $tbody.html(`
                         <tr>
-                            <td colspan="4" class="text-center text-muted py-4 font-sans fs-7">
+                            <td colspan="5" class="text-center text-muted py-4 font-sans fs-7">
                                 No withdrawals recorded yet.
                             </td>
                         </tr>
