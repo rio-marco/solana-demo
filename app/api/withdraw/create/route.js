@@ -1,34 +1,39 @@
 'use strict';
 
 const { v4: uuidv4 } = require('uuid');
-const { sendSuccess, sendError } = require('../utils/response');
-const { validateMemo, validateAmount } = require('../utils/validation');
-const { executeWithdrawalTransaction } = require('../services/solana.service');
-const Withdrawal = require('../models/withdrawal.model');
 const { PublicKey } = require('@solana/web3.js');
+const connectDatabase = require('../../../../config/database');
+const { log1, success, error } = require('../../../../utils/response');
+const { validateMemo, validateAmount } = require('../../../../utils/validation');
+const { executeWithdrawalTransaction } = require('../../../../services/solana.service');
+const Withdrawal = require('../../../../models/withdrawal.model');
 
-const createWithdrawal = async (req, res, next) => {
+export async function POST(request) {
     try {
-        const { toAddress, memo, amount } = req.body;
+        await connectDatabase();
+        const body = await request.json();
+        const { toAddress, memo, amount } = body || {};
+
+        log1('[API POST /api/withdraw/create]', { toAddress, memo, amount });
 
         if (!toAddress || typeof toAddress !== 'string' || !toAddress.trim()) {
-            return sendError(res, 'Target Solana "To Address" is required.', 400);
+            return error('Target Solana "To Address" is required.', 400);
         };
 
         try {
             new PublicKey(toAddress.trim());
         } catch (err) {
-            return sendError(res, 'Invalid Solana public key in "To Address".', 400);
+            return error('Invalid Solana public key in "To Address".', 400);
         };
 
         const memoVal = validateMemo(memo);
         if (!memoVal.isValid) {
-            return sendError(res, memoVal.error, 400);
+            return error(memoVal.error, 400);
         };
 
         const amountVal = validateAmount(amount);
         if (!amountVal.isValid) {
-            return sendError(res, amountVal.error, 400);
+            return error(amountVal.error, 400);
         };
 
         const withdrawId = `WITH-${uuidv4().substring(0, 8).toUpperCase()}`;
@@ -57,7 +62,7 @@ const createWithdrawal = async (req, res, next) => {
 
             await withdrawal.save();
 
-            return sendSuccess(res, {
+            return success({
                 withdrawId: withdrawal.withdrawId,
                 signature: withdrawal.transactionSignature,
                 fromAddress: withdrawal.fromAddress,
@@ -72,32 +77,13 @@ const createWithdrawal = async (req, res, next) => {
         } catch (txErr) {
             withdrawal.status = 'FAILED';
             withdrawal.failureReason = txErr.message;
-
             await withdrawal.save();
 
-            console.error("createWithdrawal Error----------->", txErr.message);
-            return sendError(res, txErr.message || "Solana withdrawal transaction failed", 400);
+            log1('executeWithdrawalTransaction Error----------->', txErr.message);
+            return error(txErr.message || 'Solana withdrawal transaction failed', 400);
         };
     } catch (err) {
-        console.error("createWithdrawal Error Message----------->", err.message);
-        return sendError(res, "Internal server error during withdrawal", 500);
+        log1('POST /api/withdraw/create Error Message----------->', err.message);
+        return error('Internal server error during withdrawal', 500);
     };
-};
-
-const getWithdrawals = async (req, res, next) => {
-    try {
-        const withdrawals = await Withdrawal.find()
-            .sort({ createdAt: -1 })
-            .limit(100);
-
-        return sendSuccess(res, { withdrawals });
-    } catch (err) {
-        console.error("getWithdrawals Error----------->", err.message);
-        return sendError(res, "Failed to retrieve withdrawal list", 500);
-    };
-};
-
-module.exports = {
-    createWithdrawal,
-    getWithdrawals,
 };

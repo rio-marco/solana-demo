@@ -2,6 +2,8 @@
 
 const bs58 = require('bs58');
 const { connection, MEMO_PROGRAM_ID } = require('../config/solana');
+const { log1 } = require('../utils/general');
+const connectDatabase = require('../config/database');
 const { solToLamports } = require('../utils/validation');
 const Deposit = require('../models/deposit.model');
 
@@ -11,18 +13,20 @@ const verifyDepositTransaction = async ({
     expectedAmount,
     expectedMemo,
 }) => {
+    await connectDatabase();
     const existingConfirmed = await Deposit.findOne({
         transactionSignature: signature,
         status: 'CONFIRMED',
     });
 
     if (existingConfirmed) {
+        log1('[Verification Service] Signature already processed & confirmed:', signature);
         return {
             isValid: false,
             failureReason: 'Transaction signature has already been processed and confirmed',
             isDuplicate: true,
         };
-    };
+    }
 
     let tx;
     try {
@@ -31,29 +35,31 @@ const verifyDepositTransaction = async ({
             commitment: process.env.SOLANA_COMMITMENT || 'confirmed',
         });
     } catch (err) {
-        console.error(`[Verification Error] RPC error fetching transaction: ${err.message}`);
+        log1(`[Verification Error] RPC error fetching transaction: ${err.message}`);
 
         return {
             isValid: false,
             failureReason: `RPC error retrieving transaction from Solana network: ${err.message}`,
         };
-    };
+    }
 
     if (!tx) {
+        log1('[Verification Error] Transaction signature not found on Solana blockchain:', signature);
         return {
             isValid: false,
             failureReason: 'Transaction signature not found on Solana blockchain. It may be unconfirmed or invalid.',
         };
-    };
+    }
 
     if (tx.meta && tx.meta.err !== null) {
+        log1('[Verification Error] On-chain transaction error:', tx.meta.err);
         return {
             isValid: false,
             failureReason: `Solana transaction failed on-chain with error: ${JSON.stringify(tx.meta.err)}`,
             slot: tx.slot,
             blockTime: tx.blockTime ? new Date(tx.blockTime * 1000) : null,
         };
-    };
+    }
 
     const expectedLamports = solToLamports(expectedAmount);
     let matchedDestination = false;
@@ -70,7 +76,7 @@ const verifyDepositTransaction = async ({
             isValid: false,
             failureReason: `Platform receiving address ${expectedAddress} is not involved in this transaction.`,
         };
-    };
+    }
 
     if (tx.meta && tx.meta.preBalances && tx.meta.postBalances) {
         const preBal = BigInt(tx.meta.preBalances[recipientIndex] || 0);
@@ -80,8 +86,8 @@ const verifyDepositTransaction = async ({
         if (netDifference >= expectedLamports) {
             matchedDestination = true;
             transferAmountLamports = netDifference;
-        };
-    };
+        }
+    }
 
     const allInstructions = [
         ...tx.transaction.message.instructions,
@@ -98,25 +104,25 @@ const verifyDepositTransaction = async ({
                     const parsedLamports = BigInt(info.lamports || 0);
                     if (parsedLamports === expectedLamports) {
                         transferAmountLamports = parsedLamports;
-                    };
-                };
-            };
-        };
-    };
+                    }
+                }
+            }
+        }
+    }
 
     if (!matchedDestination) {
         return {
             isValid: false,
             failureReason: `Destination address mismatch. Transaction did not transfer funds to platform address ${expectedAddress}.`,
         };
-    };
+    }
 
     if (transferAmountLamports < expectedLamports) {
         return {
             isValid: false,
             failureReason: `Transferred amount mismatch. Expected ${expectedAmount} SOL (${expectedLamports.toString()} lamports), but found ${transferAmountLamports.toString()} lamports.`,
         };
-    };
+    }
 
     let foundMemo = null;
 
@@ -134,19 +140,19 @@ const verifyDepositTransaction = async ({
                     foundMemo = Buffer.from(bs58.decode(inst.data)).toString('utf-8');
                 } catch (e) {
                     foundMemo = Buffer.from(inst.data, 'base64').toString('utf-8');
-                };
-            };
+                }
+            }
 
             if (foundMemo) break;
-        };
-    };
+        }
+    }
 
     if (!foundMemo) {
         return {
             isValid: false,
             failureReason: 'Transaction does not contain a Solana Memo Program instruction.',
         };
-    };
+    }
 
     const cleanFoundMemo = foundMemo.trim();
     const cleanExpectedMemo = expectedMemo.trim();
@@ -157,9 +163,9 @@ const verifyDepositTransaction = async ({
             failureReason: `Memo mismatch. Expected "${cleanExpectedMemo}", but on-chain Memo is "${cleanFoundMemo}".`,
             actualMemo: cleanFoundMemo,
         };
-    };
+    }
 
-    console.log(`[Verification Service] Transaction successfully verified!`);
+    log1(`[Verification Service] Transaction successfully verified!`);
 
     return {
         isValid: true,

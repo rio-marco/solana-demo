@@ -18,8 +18,7 @@ const WithdrawalSchema = new mongoose.Schema(
         },
         memo: {
             type: String,
-            required: true,
-            trim: true,
+            required: false,
         },
         amount: {
             type: Number,
@@ -70,4 +69,4 @@ const WithdrawalSchema = new mongoose.Schema(
 
 WithdrawalSchema.index({ createdAt: -1 });
 
-module.exports = mongoose.model('Withdrawal', WithdrawalSchema);
+module.exports = mongoose.models.Withdrawal || mongoose.model('Withdrawal', WithdrawalSchema);

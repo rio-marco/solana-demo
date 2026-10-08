@@ -77,4 +77,4 @@ DepositSchema.index({
     createdAt: -1,
 });
 
-module.exports = mongoose.model('Deposit', DepositSchema);
+module.exports = mongoose.models.Deposit || mongoose.model('Deposit', DepositSchema);

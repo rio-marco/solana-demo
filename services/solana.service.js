@@ -19,6 +19,8 @@ const {
     getPlatformKeypairAsync,
 } = require('../config/solana');
 
+const { log1 } = require('../utils/general');
+const connectDatabase = require('../config/database');
 const { solToLamports, lamportsToSol } = require('../utils/validation');
 const Wallet = require('../models/wallet.model');
 const Setting = require('../models/setting.model');
@@ -26,6 +28,7 @@ const Setting = require('../models/setting.model');
 const ESTIMATED_TX_FEE_LAMPORTS = BigInt(5000);
 
 const hasPlatformAddress = async () => {
+    await connectDatabase();
     const pubKey = await getPlatformPublicKeyAsync();
     if (pubKey) return true;
 
@@ -34,6 +37,7 @@ const hasPlatformAddress = async () => {
 };
 
 const generateNewPlatformAddress = async () => {
+    await connectDatabase();
     const newKeypair = Keypair.generate();
     const newPubStr = newKeypair.publicKey.toBase58();
     const newPrivStr = bs58.encode(newKeypair.secretKey);
@@ -50,10 +54,13 @@ const generateNewPlatformAddress = async () => {
     await Setting.setVal('SOLANA_PLATFORM_PUBLIC_KEY', newPubStr, 'Solana platform public key');
     await Setting.setVal('SOLANA_PLATFORM_PRIVATE_KEY', newPrivStr, 'Solana platform private key');
 
+    log1('[Solana Service] Generated new platform address:', newPubStr);
+
     return newKeypair.publicKey;
 };
 
 const getPlatformReceivingAddress = async (autoGenerate = true) => {
+    await connectDatabase();
     let pubKey = await getPlatformPublicKeyAsync();
 
     if (!pubKey) {
@@ -88,12 +95,13 @@ const getOnChainBalance = async (address) => {
             currency: 'SOL',
         };
     } catch (err) {
-        console.error(`[Solana RPC Error] Failed to fetch balance: ${err.message}`);
+        log1(`[Solana RPC Error] Failed to fetch balance: ${err.message}`);
         throw new Error(`Failed to retrieve blockchain balance: ${err.message}`);
     };
 };
 
 const executeDepositTransaction = async ({ memo, amount, recipientPublicKey }) => {
+    await connectDatabase();
     const senderKeypair = await getSenderKeypairAsync();
 
     if (!senderKeypair) {
@@ -157,6 +165,8 @@ const executeDepositTransaction = async ({ memo, amount, recipientPublicKey }) =
             },
         );
 
+        log1('[Solana Service] Executed Deposit Transaction Signature:', signature);
+
         return {
             signature,
             senderAddress: senderKeypair.publicKey.toBase58(),
@@ -177,6 +187,7 @@ const executeDepositTransaction = async ({ memo, amount, recipientPublicKey }) =
 };
 
 const executeWithdrawalTransaction = async ({ toAddress, memo, amount }) => {
+    await connectDatabase();
     let toPublicKey;
     try {
         toPublicKey = new PublicKey(toAddress);
@@ -234,10 +245,12 @@ const executeWithdrawalTransaction = async ({ toAddress, memo, amount }) => {
             transaction,
             [payerKeypair],
             {
-                commitment: process.env.SOLANA_COMMITMENT,
+                commitment: process.env.SOLANA_COMMITMENT || 'confirmed',
                 preflightCommitment: 'confirmed',
             },
         );
+
+        log1('[Solana Service] Executed Withdrawal Transaction Signature:', signature);
 
         return {
             signature,
@@ -268,7 +281,7 @@ const decodeTransactionDetails = async (signature) => {
     });
 
     if (!tx) {
-        throw new Error("Transaction details not found on Solana blockchain.");
+        throw new Error('Transaction details not found on Solana blockchain.');
     };
 
     return tx;

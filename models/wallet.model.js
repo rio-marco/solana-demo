@@ -49,9 +49,9 @@ WalletSchema.statics.getOrCreatePlatformWallet = async function (publicKeyStr, n
         wallet.publicKey = publicKeyStr;
         wallet.network = networkName;
         await wallet.save();
-    };
+    }
 
     return wallet;
 };
 
-module.exports = mongoose.model('Wallet', WalletSchema);
+module.exports = mongoose.models.Wallet || mongoose.model('Wallet', WalletSchema);

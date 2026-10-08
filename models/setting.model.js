@@ -38,4 +38,4 @@ SettingSchema.statics.setVal = async function (key, value, description = '') {
     );
 };
 
-module.exports = mongoose.model('Setting', SettingSchema);
+module.exports = mongoose.models.Setting || mongoose.model('Setting', SettingSchema);
